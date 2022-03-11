@@ -50,14 +50,20 @@ _drawtile:
 	pop		bc
 	ret
 
-_run:
-	call	INPUT._setgame
+x:
+	.byte	16
+y:
+	.byte	184
 
-	call	DISPLAY._CLSHR
-	call	DISPLAY._SETUPHIRES
+prevx:
+	.byte	0
+prevy:
+	.byte	0
 
-	ld		hl,MAPS._level1
+frame:
+	.byte	0
 
+drawmap:
 	ld		iy,DISPLAY._dfilehr
 	ld		c,24
 
@@ -74,12 +80,111 @@ _run:
 
 	dec		c
 	jr		nz,{--}
+	ret
+
+
+drawman:
+	ld		a,(y)
+	sub		14
+	ld		b,a
+	ld		a,(x)
+	sub		6
+	ld		c,a
+
+	; dr beep's optimised screen address calculation
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	ld		hl,DISPLAY._dfilehr
+	add		hl,bc
+	ex		de,hl
+
+	and		7
+	ld		b,a
+	ld		a,(x)
+	srl		a
+	srl		a
+	srl		a
+	call	CHARLIE._getFrame
+
+	ld		b,14
+
+-:	ld		a,(hl)
+	or		(hl)
+	ld		(de),a
+	inc		hl
+	inc		de
+	ld		a,(hl)
+	or		(hl)
+	ld		(de),a
+	inc		hl
+	inc		de
+	ld		a,(hl)
+	or		(hl)
+	ld		(de),a
+	inc		hl
+
+	ld		a,30
+	call	addAtoDE
+
+	djnz	{-}
+	ret
+
+addAtoDE:
+	add		a,e
+	ld		e,a
+	ret		nc
+	inc		d
+	ret
+
+
+
+_run:
+	call	INPUT._setgame
+
+	call	DISPLAY._CLSHR
+	call	DISPLAY._SETUPHIRES
+
+	ld		hl,MAPS._level1
+	call	drawmap
 
 	ld		a,3
 	call	AYFXPLAYER._PLAY
 
 _loop:
 	call	DISPLAY._FRAMESYNC
+
+	call	drawman
+	ld		a,(x)
+	ld		(prevx),a
+	ld		a,(y)
+	ld		(prevy),a
+	
+	ld		a,(INPUT._left)
+	and		1
+	jr		z,{+}
+	ld		hl,frame
+	inc		(hl)
+	ld		a,(x)
+	cp		6
+	jr		z,{+}
+	dec		a
+	ld		(x),a
+
++:	ld		a,(INPUT._right)
+	and		1
+	jr		z,{+}
+	ld		hl,frame
+	inc		(hl)
+	ld		a,(x)
+	cp		250
+	jr		z,{+}
+	inc		a
+	ld		(x),a
++:
 
 	ld		a,(INPUT._fire)
 	and		3

@@ -11,6 +11,7 @@ _getFrame:
 +:	ld		a,b
 	sla		a
 	add		a,l
+	ld		l,a
 	jr		nc,{+}
 	inc		h
 +:	ld		a,(hl)
