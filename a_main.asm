@@ -57,11 +57,7 @@ _line1:
 	ld		hl,AYFXPLAYER._soundbank
 	call	AYFXPLAYER._INIT
 
-	; enable our custom display handler.
-	; runs input processing in the vertical sync and enables use of IY register.
 	call	DISPLAY._SETUPLORES
-
-	; this is a typical game program cycle.
 
 -:	call	TITLE._run
 	call	GAME._run
@@ -86,6 +82,7 @@ _line1:
 
 	.include maps.asm
 	.include "data\tiles.asm"
+	.include "data\charlie.asm"
 
 
 ;-------------------------------------------------------------------------------
