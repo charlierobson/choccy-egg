@@ -15,6 +15,11 @@ _run:
 	ld		a,3
 	call	AYFXPLAYER._PLAY
 
+	ld		a,$68
+	ld		(DRAW._x),a
+	ld		a,56
+	ld		(DRAW._y),a
+
 _loop:
 	call	DISPLAY._FRAMESYNC
 
@@ -29,12 +34,12 @@ _loop:
 	ld		a,(DRAW._counter)
 	ld		(_jtOff),a
 	inc		a
-	cp		4
+	cp		12
 	jr		nz,{+}
 
 	set		4,(hl)					; falling
 
-+:	cp		9
++:	cp		17
 	jr		z,_adjustY
 
 	ld		(DRAW._counter),a
@@ -47,10 +52,23 @@ _jtOff=$+2
 	ld		(DRAW._y),a
 
 	; check ground if falling
+
+	ex		de,hl
+	call	MAPS._getTileAtFoot
+	ex		de,hl
+	ld		a,(de)
+	cp		$08
+	jp		nz,_drawMan
+
+	res		5,(hl)
+	res		4,(hl)
+	ld		a,(DRAW._y)
+	and		%11111000
+	ld		(DRAW._y),a
 	jp		_drawMan
 
 _jumpTable:
-	.byte	-4,-3,-2,-1,0,1,2,3,4
+	.byte	-4,-3,-2,-2,-1,-1,-1,-1,0,0,0,0,0,1,2,3,4
 
 
 _onGround:
