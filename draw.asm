@@ -2,10 +2,12 @@
 
 
 
-
+; a -> tile number
+; iy -> screen dest
 _TILE:
 	push	bc
 	push	hl
+	push	de
 
 	push	iy
 	pop		hl
@@ -46,6 +48,7 @@ _TILE:
 	ld		a,(bc)
 	ld		(hl),a
 
+	pop		de
 	pop		hl
 	pop		bc
 	ret
@@ -124,17 +127,17 @@ _MAN:
 
 	ld		b,14
 
--:	ld		a,(hl)
+-:	ld		a,(de)
 	or		(hl)
 	ld		(de),a
 	inc		hl
 	inc		de
-	ld		a,(hl)
+	ld		a,(de)
 	or		(hl)
 	ld		(de),a
 	inc		hl
 	inc		de
-	ld		a,(hl)
+	ld		a,(de)
 	or		(hl)
 	ld		(de),a
 	inc		hl
@@ -145,3 +148,83 @@ _MAN:
 	djnz	{-}
 	ret
 
+
+
+_NOMAN:
+	ld		a,(_prevx)
+	sub		6
+	ld		c,a
+	ld		a,(_prevy)
+	sub		14
+	and		$f8
+	ld		b,a
+
+	push	bc
+	srl		b
+	srl		b
+	srl		b
+
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	ld		hl,MAPS._level1
+	add		hl,bc
+	ex		de,hl				; de -> tile under top left of man's position
+
+	pop		bc
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	ld		iy,DISPLAY._dfilehr
+	add		iy,bc				; iy -> hires screen address
+
+	ld		a,(de)
+	call	_TILE
+	inc		de
+	inc		iy
+	ld		a,(de)
+	call	_TILE
+	inc		de
+	inc		iy
+	ld		a,(de)
+	call	_TILE
+
+	ld		a,30
+	call	adda2de
+	ld		bc,(32*7)+30
+	add		iy,bc
+
+	ld		a,(de)
+	call	_TILE
+	inc		de
+	inc		iy
+	ld		a,(de)
+	call	_TILE
+	inc		de
+	inc		iy
+	ld		a,(de)
+	call	_TILE
+
+	ld		a,30
+	call	adda2de
+	ld		bc,(32*7)+30
+	add		iy,bc
+
+	ld		a,(de)
+	call	_TILE
+	inc		de
+	inc		iy
+	ld		a,(de)
+	call	_TILE
+	inc		de
+	inc		iy
+	ld		a,(de)
+	call	_TILE
+
+	ret

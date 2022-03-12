@@ -17,8 +17,10 @@ _run:
 
 	ld		a,$68
 	ld		(DRAW._x),a
+	ld		(DRAW._prevx),a
 	ld		a,56
 	ld		(DRAW._y),a
+	ld		(DRAW._prevy),a
 
 _loop:
 	call	DISPLAY._FRAMESYNC
@@ -115,7 +117,8 @@ _drawMan:
 
 	set		0,(hl)
 
-+:	call	DRAW._MAN
++:	call	DRAW._NOMAN
+	call	DRAW._MAN
 	ld		a,(DRAW._x)
 	ld		(DRAW._prevx),a
 	ld		a,(DRAW._y)
