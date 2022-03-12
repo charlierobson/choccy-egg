@@ -104,10 +104,7 @@ drawman:
 
 	and		7
 	ld		b,a
-	ld		a,(x)
-	srl		a
-	srl		a
-	srl		a
+	ld		a,(frame)
 	call	CHARLIE._getFrame
 
 	ld		b,14
@@ -157,34 +154,56 @@ _run:
 _loop:
 	call	DISPLAY._FRAMESYNC
 
+	ld		hl,frame				; animation base
+	res		0,(hl)					; remove 'walking' bit
+
+	ld		a,(INPUT._left)
+	and		1
+	jr		z,_tryRight
+
+	set		1,(hl)					; he's a-walkin', left
+	ld		a,(frames)
+	rra
+	rra
+	rra
+	jr		nc,{+}
+
+	set		0,(hl)
+
++:	ld		a,(x)
+	cp		6
+	jr		z,_tryRight
+
+	dec		a
+	ld		(x),a
+
+_tryRight:
+	ld		a,(INPUT._right)
+	and		1
+	jr		z,_drawman
+
+	res		1,(hl)					; he's a-walkin', right
+	ld		a,(frames)
+	rra
+	rra
+	rra
+	jr		nc,{+}
+
+	set		0,(hl)
+
++:	ld		a,(x)
+	cp		250
+	jr		z,_drawman
+
+	inc		a
+	ld		(x),a
+
+_drawman:
 	call	drawman
 	ld		a,(x)
 	ld		(prevx),a
 	ld		a,(y)
 	ld		(prevy),a
-	
-	ld		a,(INPUT._left)
-	and		1
-	jr		z,{+}
-	ld		hl,frame
-	inc		(hl)
-	ld		a,(x)
-	cp		6
-	jr		z,{+}
-	dec		a
-	ld		(x),a
-
-+:	ld		a,(INPUT._right)
-	and		1
-	jr		z,{+}
-	ld		hl,frame
-	inc		(hl)
-	ld		a,(x)
-	cp		250
-	jr		z,{+}
-	inc		a
-	ld		(x),a
-+:
 
 	ld		a,(INPUT._fire)
 	and		3
