@@ -9,6 +9,14 @@ adda2hl:
 	inc		h
 	ret
 
+adda2de:
+	add		a,e
+	ld		e,a
+	ret		nc
+	inc		d
+	ret
+
+
 
 ; Gets a word from a table at offset in a, table base in hl
 ;

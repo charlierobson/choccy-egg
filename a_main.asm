@@ -74,6 +74,7 @@ _line1:
 	.include s_game.asm
 	.include s_gameover.asm
 
+	.include draw.asm
 	.include general.asm
 	.include input.asm
 	.include displaydriver.asm

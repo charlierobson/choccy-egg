@@ -1,142 +1,6 @@
 ;-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 ;
-.module GAME
-
-
-_drawtile:
-	push	bc
-	push	hl
-
-	push	iy
-	pop		hl
-
-	ld		b,TILES._START / 256
-	ld		c,a
-
-	ld		de,32
-
-	ld		a,(bc)
-	ld		(hl),a
-	add		hl,de
-	inc		bc
-	ld		a,(bc)
-	ld		(hl),a
-	add		hl,de
-	inc		bc
-	ld		a,(bc)
-	ld		(hl),a
-	add		hl,de
-	inc		bc
-	ld		a,(bc)
-	ld		(hl),a
-	add		hl,de
-	inc		bc
-	ld		a,(bc)
-	ld		(hl),a
-	add		hl,de
-	inc		bc
-	ld		a,(bc)
-	ld		(hl),a
-	add		hl,de
-	inc		bc
-	ld		a,(bc)
-	ld		(hl),a
-	add		hl,de
-	inc		bc
-	ld		a,(bc)
-	ld		(hl),a
-
-	pop		hl
-	pop		bc
-	ret
-
-x:
-	.byte	16
-y:
-	.byte	184
-
-prevx:
-	.byte	0
-prevy:
-	.byte	0
-
-frame:
-	.byte	0
-
-drawmap:
-	ld		iy,DISPLAY._dfilehr
-	ld		c,24
-
---:	ld		b,32
-
--:	ld		a,(hl)
-	call	_drawtile
-	inc		hl
-	inc		iy
-	djnz	{-}
-
-	ld		de,32*7
-	add		iy,de
-
-	dec		c
-	jr		nz,{--}
-	ret
-
-
-drawman:
-	ld		a,(y)
-	sub		14
-	ld		b,a
-	ld		a,(x)
-	sub		6
-	ld		c,a
-
-	; dr beep's optimised screen address calculation
-	srl		b
-	rr		c
-	srl		b
-	rr		c
-	srl		b
-	rr		c
-	ld		hl,DISPLAY._dfilehr
-	add		hl,bc
-	ex		de,hl
-
-	and		7
-	ld		b,a
-	ld		a,(frame)
-	call	CHARLIE._getFrame
-
-	ld		b,14
-
--:	ld		a,(hl)
-	or		(hl)
-	ld		(de),a
-	inc		hl
-	inc		de
-	ld		a,(hl)
-	or		(hl)
-	ld		(de),a
-	inc		hl
-	inc		de
-	ld		a,(hl)
-	or		(hl)
-	ld		(de),a
-	inc		hl
-
-	ld		a,30
-	call	addAtoDE
-
-	djnz	{-}
-	ret
-
-addAtoDE:
-	add		a,e
-	ld		e,a
-	ret		nc
-	inc		d
-	ret
-
+	.module GAME
 
 
 _run:
@@ -146,7 +10,7 @@ _run:
 	call	DISPLAY._SETUPHIRES
 
 	ld		hl,MAPS._level1
-	call	drawmap
+	call	DRAW._MAP
 
 	ld		a,3
 	call	AYFXPLAYER._PLAY
@@ -154,35 +18,77 @@ _run:
 _loop:
 	call	DISPLAY._FRAMESYNC
 
-	ld		hl,frame				; animation base
-	res		0,(hl)					; remove 'walking' bit
+	ld		hl,DRAW._frame			; motion state
+	res		0,(hl)					; standing frame
+
+	bit		5,(hl)					; in air?
+	jr		z,_onGround
+
+	; do in-air stuff
+
+	ld		a,(DRAW._counter)
+	ld		(_jtOff),a
+	inc		a
+	cp		4
+	jr		nz,{+}
+
+	set		4,(hl)					; falling
+
++:	cp		9
+	jr		z,_adjustY
+
+	ld		(DRAW._counter),a
+
+_adjustY:
+	ld		iy,_jumpTable
+	ld		a,(DRAW._y)
+_jtOff=$+2
+	add		a,(iy+0)
+	ld		(DRAW._y),a
+
+	; check ground if falling
+	jp		_drawMan
+
+_jumpTable:
+	.byte	-4,-3,-2,-1,0,1,2,3,4
+
+
+_onGround:
+	res		7,(hl)					; not moving
+	res		6,(hl)					;
+	res		1,(hl)					;
 
 	ld		a,(INPUT._left)
 	and		1
 	jr		z,_tryRight
 
-	set		1,(hl)					; he's a-walkin', left
-	ld		a,(frames)
-	rra
-	rra
-	rra
-	jr		nc,{+}
-
-	set		0,(hl)
-
-+:	ld		a,(x)
-	cp		6
-	jr		z,_tryRight
-
-	dec		a
-	ld		(x),a
+	set		7,(hl)					; he's a-walkin' left
+	set		1,(hl)
 
 _tryRight:
 	ld		a,(INPUT._right)
 	and		1
-	jr		z,_drawman
+	jr		z,_checkJump
 
-	res		1,(hl)					; he's a-walkin', right
+	set		6,(hl)					; he's a-walkin' right
+
+_checkJump:
+	ld		a,(INPUT._fire)
+	and		3
+	cp		1
+	jr		nz,_drawMan
+
+	set		5,(hl)					; in the air
+	xor		a
+	ld		(DRAW._counter),a
+
+_drawMan:
+	call	_updateHoriz
+
+	ld		a,(hl)				; update manimation if moving
+	and		$c0
+	jr		z,{+}
+
 	ld		a,(frames)
 	rra
 	rra
@@ -191,25 +97,39 @@ _tryRight:
 
 	set		0,(hl)
 
-+:	ld		a,(x)
++:	call	DRAW._MAN
+	ld		a,(DRAW._x)
+	ld		(DRAW._prevx),a
+	ld		a,(DRAW._y)
+	ld		(DRAW._prevy),a
+
+	jp		_loop
+
+
+_updateHoriz:
+	ld		a,(DRAW._x)
+	bit		7,(hl)
+	jr		z,{+}
+
+	cp		6
+	ret		z
+
+	dec		a
+	ld		(DRAW._x),a
+	ret
+
++:	bit		6,(hl)
+	ret		z
+
 	cp		250
-	jr		z,_drawman
+	ret		z
 
 	inc		a
-	ld		(x),a
+	ld		(DRAW._x),a
+	ret
 
-_drawman:
-	call	drawman
-	ld		a,(x)
-	ld		(prevx),a
-	ld		a,(y)
-	ld		(prevy),a
 
-	ld		a,(INPUT._fire)
-	and		3
-	cp		1
-	jr		nz,_loop
-
+_gameOver:
 	ld		a,2
 	call	AYFXPLAYER._PLAY
 

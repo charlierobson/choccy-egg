@@ -24,8 +24,8 @@ _getFrame:
 	ret
 
 _charlieFrames:
-	.word	_frame00,_frame10	; xoff 0 facing right still, facing right run
-	.word	_frame20,_frame30	;        facing left still,  facing left run
+	.word	_frame00,_frame10		; xoff 0 facing right still, facing right run
+	.word	_frame20,_frame30		;        facing left still,  facing left run
 
 	.word	_frame01,_frame11
 	.word	_frame21,_frame31
