@@ -4,16 +4,34 @@
 ; b = x & 7
 ; a = frame num (bit 0 walk, bit 1 l/r facing)
 
+; eg: 
+; a = 0, b = 1
+; man is facing right, standing
+;
+; b * 8 = 8, so we'll be looking at second table entry
+; a * 2 = 0, so we'll be looking at the first word in that entry
+; -> _frame01
+;
+; if a = 1, we're after a facing right walk frame
+; a * 2 = 2 ->  _frame11
+
+; if a = 2, we're after a facing left stand frame
+; a * 2 = 4 ->  _frame21
+
+; if a = 3, we're after a facing left walk frame
+; a * 2 = 6 ->  _frame31
+;
 _getFrame:
 	ld		hl,_charlieFrames
 	sla		a
-	ld		c,a
-	ld		a,b
+	ld		c,a							; stash a*2 for later
+
+	ld		a,b							; each table entry is 8 bytes
 	sla		a
 	sla		a
 	sla		a
-	add		a,l
-	add		a,c
+	add		a,l							; -> start of a table entry
+	add		a,c							; -> index into the entry
 	ld		l,a
 	jr		nc,{+}
 	inc		h
@@ -21,16 +39,16 @@ _getFrame:
 	inc		hl
 	ld		h,(hl)
 	ld		l,a
-	ret
+	ret									; hl -> sprite pixel data
 
 _charlieFrames:
-	.word	_frame00,_frame10		; xoff 0 facing right still, facing right run
-	.word	_frame20,_frame30		;        facing left still,  facing left run
+	.word	_frame00,_frame10		; facing right still, facing right run     shifted right by 0
+	.word	_frame20,_frame30		; facing left still,  facing left run
 
-	.word	_frame01,_frame11
+	.word	_frame01,_frame11		; shifted right by 1
 	.word	_frame21,_frame31
 
-	.word	_frame02,_frame12
+	.word	_frame02,_frame12		; etc
 	.word	_frame22,_frame32
 
 	.word	_frame03,_frame13
