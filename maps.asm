@@ -4,12 +4,17 @@
 ; which turns character codes into byte offsets into character set
 ;
 _level1:
-	.incbin	"data\cheg1.off"
+	.incbin	"data\cheg1m.off"
+
+_level3:
+	.incbin	"data\cheg3.off"
 
 _title:
 	.incbin "data\title.binlz"
 
-_getTileAtFoot:
+
+_getTileUnderFoot:
+	push	bc
 	ld		a,(DRAW._x)
 	ld		c,a
 	ld		a,(DRAW._y)
@@ -24,6 +29,7 @@ _getTileAtFoot:
 	rr		c
 	srl		b
 	rr		c
-	ld		hl,MAPS._level1
-	add		hl,bc
+	ld		iy,MAPS._level1
+	add		iy,bc
+	pop		bc
 	ret

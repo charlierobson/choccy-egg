@@ -83,14 +83,15 @@ _y:
 	.byte	184
 
 _prevx:
-	.byte	0
+	.byte	16
 _prevy:
-	.byte	0
+	.byte	184
 
 ; bit 7 - moving left
 ; bit 6 - moving right
 ; bit 5 - in the air
 ; bit 4 - falling
+; bit 3 - climbing
 ;
 ; bit 1 - facing left
 ; bit 0 - walking animation

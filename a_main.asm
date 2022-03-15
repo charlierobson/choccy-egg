@@ -59,6 +59,10 @@ _line1:
 
 	call	DISPLAY._SETUPLORES
 
+	ld		bc,$e007					; disable zxpand overlay for access to charset
+	ld		a,$f0
+	out		(c),a
+
 -:	call	TITLE._run
 	call	GAME._run
     call    GAMEOVER._run
