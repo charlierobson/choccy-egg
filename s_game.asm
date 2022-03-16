@@ -18,7 +18,7 @@ _run:
 	ld		a,$68
 	ld		(DRAW._x),a
 	ld		(DRAW._prevx),a
-	ld		a,56
+	ld		a,$37
 	ld		(DRAW._y),a
 	ld		(DRAW._prevy),a
 
@@ -26,30 +26,83 @@ _run:
 	ld		(DRAW._state),a
 
 _loop:
-	call	DISPLAY._FRAMESYNC
-
-	ld		hl,DRAW._state				; motion state, try and heep hl set to this for entire loop
+	ld		hl,DRAW._state				; motion state, try and keep hl set to this for entire loop
 	res		0,(hl)						; default to standing frame, in case no movement
 
-	call	_updateHoriz
+	ld		a,(DRAW._x)					; keep previous position around for undrawing purposes
+	ld		(DRAW._prevx),a
+	ld		a,(DRAW._y)
+	ld		(DRAW._prevy),a
 
-	call	MAPS._getTileUnderFoot
+	call	_speculativeMove			; performs a move without worrying where we'll end up
+	call	_updatePosition				; clips movement if necessary, leaving man in valid position
+
+	res		0,(hl)						; clear walking bit
+
+	ld		a,(hl)						; update manimation if moving or on ladder
+	and		%11001000
+	jr		z,{+}
+
+	ld		a,(frames)					; animation frame tied to frames counter
+	rra
+	rra
+	rra
+	jr		nc,{+}
+
+	set		0,(hl)
+
++:	call	DISPLAY._FRAMESYNC
+	call	DRAW._NOMAN					; undraw man at old position
+	call	DRAW._MAN					; draw man at new position
+
+	jp		_loop
+
+
+
+_speculativeMove:
+	ld		bc,(DRAW._x)
+
+	ld		a,(INPUT._up)
+	and		1
+	jr		z,{+}
+
+	dec		b
+
++:	ld		a,(INPUT._down)
+	and		1
+	jr		z,{+}
+
+	inc		b
+
++:	ld		a,(INPUT._left)
+	and		1
+	jr		z,{+}
+
+	dec		c
+
++:	ld		a,(INPUT._right)
+	and		1
+	jr		z,{+}
+
+	inc		c
+
++:	ld		(DRAW._x),bc
+	ret
+
+
+_updatePosition:
+	call	MAPS._getMapAddrAtFoot		; see what's there
 	ld		a,(iy)
-	ld		(_tileBelowFoot),a
-	push	iy
-	ld		iy,DISPLAY._dfilehr+(12*32)
-	call	DRAW._TILE
-	ld		iy,DISPLAY._dfilehr+(21*32)
-	ld		a,$ff
-	ld		(iy),a
-	pop		iy
-	ld		a,(iy-32)
 	ld		(_tileAtFoot),a
-	ld		iy,DISPLAY._dfilehr+(4*32)
-	call	DRAW._TILE
-	ld		iy,DISPLAY._dfilehr+(3*32)
-	ld		a,$ff
-	ld		(iy),a
+	ld		a,(iy+32)
+	ld		(_tileBelowFoot),a
+	ld		a,1
+	and		a
+	call	nz,_debugShowTiles
+	ret
+
+
+.endasm ;!!!!!!!!!!!!!!!!!!
 
 	bit		5,(hl)						; are we in the air?
 	jp		nz,_inAir
@@ -279,35 +332,6 @@ _solidCheck:
 
 
 
-
-_updates:
-	ld		a,(hl)						; update manimation if moving or on ladder
-	and		%11001000
-	jr		z,{+}
-
-	ld		a,(frames)					; animation frame tied to frames counter
-	rra
-	rra
-	rra
-	jr		nc,{+}
-
-	set		0,(hl)
-
-+:	call	DRAW._NOMAN					; undraw man at old position
-	call	DRAW._MAN					; draw man at new position
-
-	ld		a,(DRAW._x)					; make what is new old again
-	ld		(DRAW._prevx),a
-	ld		a,(DRAW._y)
-	ld		(DRAW._prevy),a
-
-	jp		_loop
-
-_tileBelowFoot:
-	.byte	0
-_tileAtFoot:
-	.byte	0
-
 _updateHoriz:
 	ld		a,(DRAW._x)
 
@@ -332,6 +356,8 @@ _updateHoriz:
 	ret
 
 
+.asm ;!!!!!!!!!!!!!!!!!!
+
 _gameOver:
 	ld		a,2
 	call	AYFXPLAYER._PLAY
@@ -350,6 +376,39 @@ _jumpTableFall:
 
 jtFallIdx=_jumpTableFall-_jumpTable-1
 jtEndIdx=$-_jumpTable-1
+
+
+_tileBelowFoot:
+	.byte	0
+_tileAtFoot:
+	.byte	0
+
+
+_debugShowTiles:
+	push	iy
+	ld		iy,DISPLAY._dfilehr+(4*32)
+	ld		a,$ff
+	ld		(iy-32),a
+	ld		a,(_tileAtFoot)
+	call	DRAW._TILE
+
+	ld		iy,DISPLAY._dfilehr+(12*32)
+	ld		a,(_tileBelowFoot)
+	call	DRAW._TILE
+
+	ld		iy,DISPLAY._dfilehr+(20*32)
+	ld		a,$ff
+	ld		(iy),a
+
+	ld		iy,DISPLAY._dfilehr+2
+	ld		(pr_cc),iy
+	ld		a,(DRAW._x)
+	call	DRAW._HEX
+	ld		a,(DRAW._y)
+	call	DRAW._HEX
+
+	pop		iy
+	ret
 
 
 .endmodule

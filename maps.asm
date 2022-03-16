@@ -12,8 +12,9 @@ _level3:
 _title:
 	.incbin "data\title.binlz"
 
-
-_getTileUnderFoot:
+; returns with base map address in iy
+;
+_getMapAddrAtFoot:
 	push	bc
 	ld		a,(DRAW._x)
 	ld		c,a

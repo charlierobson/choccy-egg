@@ -2,7 +2,27 @@
 
 
 
-; a -> tile number
+; a -> character number
+; iy -> screen dest
+_CSET:
+	push	bc
+	push	hl
+	push	de
+
+	push	iy
+	pop		hl
+
+	ld		b,$1e
+	ld		c,a
+	sla		c
+	sla		c
+	sla		c
+	jr		nc,_tileDraw
+	inc		b
+	jr		_tileDraw
+
+
+; a -> tile offset
 ; iy -> screen dest
 _TILE:
 	push	bc
@@ -15,6 +35,7 @@ _TILE:
 	ld		b,TILES._START / 256
 	ld		c,a
 
+_tileDraw:
 	ld		de,32
 
 	ld		a,(bc)
@@ -80,12 +101,12 @@ _MAP:
 _x:
 	.byte	16
 _y:
-	.byte	184
+	.byte	183
 
 _prevx:
 	.byte	16
 _prevy:
-	.byte	184
+	.byte	183
 
 ; bit 7 - moving left
 ; bit 6 - moving right
@@ -96,6 +117,9 @@ _prevy:
 ; bit 1 - facing left
 ; bit 0 - walking
 _state:
+	.byte	0
+
+_prevstate:
 	.byte	0
 
 _counter:
@@ -121,7 +145,7 @@ _counter:
 
 _MAN:
 	ld		a,(_y)						; modify x,y to get top left pixel indices
-	sub		14
+	sub		13
 	ld		b,a
 	ld		a,(_x)
 	sub		6
@@ -250,4 +274,29 @@ _NOMAN:
 	ld		a,(de)
 	call	_TILE
 
+	ret
+
+
+
+_HEX:
+	push	af
+	srl		a
+	srl		a
+	srl		a
+	srl		a
+	call	_hexDigit
+	pop		af
+_hexDigit:
+	and		$0f
+	add		a,$1c
+
+_RST8:
+	; character code in a
+	push	iy
+	ld		iy,(pr_cc)
+	inc		iy
+	ld		(pr_cc),iy
+	dec		iy
+	call	_CSET
+	pop		iy
 	ret
