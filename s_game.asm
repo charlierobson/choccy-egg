@@ -49,7 +49,7 @@ _loop:
 	ld		a,b
 	ld		(_animState),a
 
-	call	_debugShowTiles
+	call	_debugOutput
 
 	call	DISPLAY._FRAMESYNC
 
@@ -469,6 +469,11 @@ _xforce:
 _yforce:
 	.word	0
 
+_mapAddrAtFootBeforeMove:
+	.word	 0
+_mapAddrAtFootAfterMove:
+	.word	 0
+
 
 ; bit 7 - moving left
 ; bit 6 - moving right
@@ -483,28 +488,8 @@ _state:
 _animState:
 	.byte	0
 
-_prevstate:
-	.byte	0
 
-_counter:
-	.byte	0
-
-
-_jumpTable:
-	.byte	-2,-2,-2,-2,-1,-1,-1,-1,0,0,0,0,0,0
-_jumpTableFall:
-	.byte	1,1,1,1,2,2,2,2,3,4
-
-jtFallIdx=_jumpTableFall-_jumpTable-1
-jtEndIdx=$-_jumpTable-1
-
-
-_mapAddrAtFootBeforeMove:
-	.word	 0
-_mapAddrAtFootAfterMove:
-	.word	 0
-
-_debugShowTiles:
+_debugOutput:
 	push	iy
 	push	hl
 
