@@ -1,18 +1,3 @@
-	.module TILES
-_AIR = $00
-_LADDERA = $08
-_LADDERLA = $10
-_LADDERRA = $18
-_EGG = $20
-_SEED = $28
-
-_GROUND = $40
-_LADDERS = $48
-_LADDERLS = $48
-_LADDERRS = $48
-
-	.align	256
-_START:
 
 	.byte	$00		; '        '
 	.byte	$00		; '        '

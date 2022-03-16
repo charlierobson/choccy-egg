@@ -94,8 +94,8 @@ _prevy:
 ; bit 3 - climbing
 ;
 ; bit 1 - facing left
-; bit 0 - walking animation
-_frame:
+; bit 0 - walking
+_state:
 	.byte	0
 
 _counter:
@@ -141,7 +141,7 @@ _MAN:
 
 	and		7							; bottom 3 bits of x coord contains the number of shifts
 	ld		b,a
-	ld		a,(_frame)					; bottom 2 bits are 'left facing' and 'frame2' 
+	ld		a,(_state)					; bottom 2 bits are 'left facing' and 'frame2' 
 	and		3							;
 	call	CHARLIE._getFrame			; in: b-> x & 7, a-> sprite frame number
 

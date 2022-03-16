@@ -148,6 +148,6 @@ _dfile:
 
 	.align	32
 _dfilehr:
-	.incbin	"data\hrmonk.bin"
+	.fill	32*192,0
 
 .endmodule

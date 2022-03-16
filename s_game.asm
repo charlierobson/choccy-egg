@@ -23,12 +23,12 @@ _run:
 	ld		(DRAW._prevy),a
 
 	xor		a
-	ld		(DRAW._frame),a
+	ld		(DRAW._state),a
 
 _loop:
 	call	DISPLAY._FRAMESYNC
 
-	ld		hl,DRAW._frame				; motion state, try and heep hl set to this for entire loop
+	ld		hl,DRAW._state				; motion state, try and heep hl set to this for entire loop
 	res		0,(hl)						; default to standing frame, in case no movement
 
 	call	_updateHoriz
@@ -39,11 +39,17 @@ _loop:
 	push	iy
 	ld		iy,DISPLAY._dfilehr+(12*32)
 	call	DRAW._TILE
+	ld		iy,DISPLAY._dfilehr+(21*32)
+	ld		a,$ff
+	ld		(iy),a
 	pop		iy
 	ld		a,(iy-32)
 	ld		(_tileAtFoot),a
 	ld		iy,DISPLAY._dfilehr+(4*32)
 	call	DRAW._TILE
+	ld		iy,DISPLAY._dfilehr+(3*32)
+	ld		a,$ff
+	ld		(iy),a
 
 	bit		5,(hl)						; are we in the air?
 	jp		nz,_inAir
@@ -70,7 +76,8 @@ _onGround:
 
 _stillOnGround:
 	ld		a,(_tileBelowFoot)
-	cp		$10							; ladder meat
+	res		6,a
+	cp		TILES._LADDERA				; ladder meat
 	jr		nz,_checkAscend
 
 _checkDescend:
@@ -80,6 +87,10 @@ _checkDescend:
 
 _mountLadder:
 	set		3,(hl)						; we're on a ladder now..!
+	res		6,(hl)
+	res		7,(hl)
+	res		5,(hl)
+	res		4,(hl)
 	ld		a,(DRAW._x)
 	and		$f8
 	or		4
@@ -88,7 +99,8 @@ _mountLadder:
 
 _checkAscend:
 	ld		a,(_tileAtFoot)
-	cp		$10
+	res		6,a
+	cp		TILES._LADDERA
 	jr		nz,_checkLeft
 
 	ld		a,(INPUT._up)
@@ -125,6 +137,16 @@ _checkJump:
 
 
 _inAir:
+	ld		a,(_tileAtFoot)
+	res		6,a
+	cp		TILES._LADDERA
+	jr		nz,_noCheckClimb
+
+	ld		a,(INPUT._up)
+	and		1
+	jp		nz,_mountLadder
+
+_noCheckClimb:
 	ld		a,(DRAW._counter)			; whilst in air draw counter is offset into jumping table
 	ld		(_jtOff),a					; self-modify
 	inc		a
@@ -163,6 +185,7 @@ _soSolid:
 
 
 _onLadder:
+	res		0,(hl)
 	ld		b,0
 	ld		a,(INPUT._right)
 	srl		a
@@ -175,6 +198,11 @@ _onLadder:
 	and		1
 	jr		z,_noUp
 
+	ld		a,(_tileAtFoot)
+	res		6,a
+	cp		TILES._LADDERA
+	jr		nz,_noUp
+
 	ld		a,(DRAW._y)
 	dec		a
 	ld		(DRAW._y),a
@@ -184,35 +212,48 @@ _noUp:
 	and		1
 	jr		z,_noDown
 
+	ld		a,(_tileAtFoot)
+	res		6,a
+	cp		TILES._LADDERA
+	jr		nz,_noDown
+
 	ld		a,(DRAW._y)
 	inc		a
 	ld		(DRAW._y),a
-	; check for floor here
 
 _noDown:
 	ld		a,(INPUT._fire)
-	and		1
-	jr		z,_noJumpOff
+	and		3
+	cp		1
+	jr		nz,_noJumpOff
 
 	bit		0,b
 	jr		z,_tryJumpOffRight
 
-	set		7,(hl)						; set moving left bit, in air bit and offset
-	set		5,(hl)
 	res		3,(hl)						; clear climbing bit
+	set		7,(hl)						; set moving left, in air, facing left and offset
+	set		5,(hl)
+	set		1,(hl)
 	xor		a
 	ld		(DRAW._counter),a
+	ld		a,(DRAW._x)					; move off ladder
+	sub		4
+	ld		(DRAW._x),a
 	jp		_updates
 
 _tryJumpOffRight:
 	bit		1,b
 	jr		z,_noJumpOff
 
+	res		3,(hl)						; clear climbing bit
 	set		6,(hl)						; set moving right bit, in air bit and offset
 	set		5,(hl)
-	res		3,(hl)						; clear climbing bit
+	res		1,(hl)						; clear facing left
 	xor		a
 	ld		(DRAW._counter),a
+	ld		a,(DRAW._x)					; move off ladder
+	add		a,4
+	ld		(DRAW._x),a
 	jp		_updates
 
 _noJumpOff:
@@ -220,33 +261,20 @@ _noJumpOff:
 	and		7
 	jp		nz,_updates
 
-	ld		a,b
+	ld		a,b							; cached l/r buttons
 	and		3
 	jp		z,_updates
 
-	res		3,(hl)
+	res		3,(hl)						; just walk off
 	jp		_updates
 
-
-
-; FLOOROFF = 0x08
-; LADDERCOFF = 0x10
-; LADDERLFOFF = 0x18
-; LADDERRFOFF = 0x20
-; LADDERLOFF = 0x28
-; LADDERROFF = 0x30
-; EGGOFF = 0x38
-; SEEDOFF = 0x40
 
 
 ; returns with z set if ground underfoot is solid
 _solidCheck:
 	ld		a,(_tileBelowFoot)
-	sub		8							; floor, c set if zero
-	ret		c
-	cp		$1f							; ladderl-8, sub extra 1 so result won't be 0
-	ret		nc
-	xor		a
+	xor		$ff
+	bit		6,a
 	ret
 
 
