@@ -68,11 +68,12 @@ _updateMovement:
 	;call	nz,_onLadderUpdate
 
 _onGroundUpdate:
-	ld		bc,$0000
-	ld		(_xforce),bc ; preserve force across updates?
-	ld		(_yforce),bc
+	ld		bc,(_xforce)				; halve the x force each time, or better: subtract and clamp
+	sra		b
+	rr		c
+	ld		(_xforce),bc
 
-	ld		a,(INPUT._up)
+	ld		a,(INPUT._up) ; hack
 	and		3
 	cp		1
 	jr		nz,{+}
@@ -91,14 +92,26 @@ _onGroundUpdate:
 
 +:	ld		a,(INPUT._right)
 	and		1
-	jr		z,_onGroundMove
+	jr		z,_checkJump
 
 	ld		a,0							; face right
 	ld		(_animState),a
 	ld		bc,$0100		; replace with call to addForceClampedTo1
 	ld		(_xforce),bc
 
-_onGroundMove:
+_checkJump:
+	ld		a,(INPUT._fire)
+	and		3
+	cp		1
+	jr		nz,_move
+
+	ld		bc,$fd80
+	ld		(_yforce),bc
+	set		5,(hl)
+	call	_updatePosition
+	ret
+
+_move:
 	call	_updatePosition
 	ld		a,(iy+32)
 	and		$C0
@@ -128,9 +141,7 @@ _startFall:
 	ld		bc,(_xforce)				; halve the x force each time, or better: subtract and clamp
 	sra		b
 	rr		c
-	jr		nc,{+}
-	set		6,c
-+:	ld		(_xforce),bc
+	ld		(_xforce),bc
 	ld		bc,$0100
 	ld		(_yforce),bc
 	ld		(hl),%00110000				; state = in air/falling
