@@ -14,11 +14,11 @@ _title:
 
 ; returns with base map address in iy
 ;
-_getMapAddrAtFoot:
+_getAddrAtFoot:
 	push	bc
-	ld		a,(DRAW._x)
+	ld		a,(GAME._x+1)
 	ld		c,a
-	ld		a,(DRAW._y)
+	ld		a,(GAME._y+1)
 	srl		a
 	srl		a
 	srl		a

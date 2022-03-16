@@ -97,35 +97,6 @@ _MAP:
 
 
 
-
-_x:
-	.byte	16
-_y:
-	.byte	183
-
-_prevx:
-	.byte	16
-_prevy:
-	.byte	183
-
-; bit 7 - moving left
-; bit 6 - moving right
-; bit 5 - in the air
-; bit 4 - falling
-; bit 3 - climbing
-;
-; bit 1 - facing left
-; bit 0 - walking
-_state:
-	.byte	0
-
-_prevstate:
-	.byte	0
-
-_counter:
-	.byte	0
-
-
 ; man position is centered on his foot, which is offset 6,14 pixels, marked by X below.
 ;
 ;    ###     
@@ -144,10 +115,10 @@ _counter:
 ;     #X#    
 
 _MAN:
-	ld		a,(_y)						; modify x,y to get top left pixel indices
+	ld		a,(GAME._y+1)				; modify x,y to get top left pixel indices
 	sub		13
 	ld		b,a
-	ld		a,(_x)
+	ld		a,(GAME._x+1)
 	sub		6
 	ld		c,a
 
@@ -165,7 +136,7 @@ _MAN:
 
 	and		7							; bottom 3 bits of x coord contains the number of shifts
 	ld		b,a
-	ld		a,(_state)					; bottom 2 bits are 'left facing' and 'frame2' 
+	ld		a,(GAME._animState)			; bottom 2 bits are 'left facing' and 'frame2' 
 	and		3							;
 	call	CHARLIE._getFrame			; in: b-> x & 7, a-> sprite frame number
 
@@ -197,11 +168,11 @@ _MAN:
 ; draw 3x3 background tiles where the man _was_.
 ;
 _NOMAN:
-	ld		a,(_prevx)					; move x,y to top left
+	ld		a,(GAME._prevx+1)			; move x,y to top left
 	sub		6
 	ld		c,a
 
-	ld		a,(_prevy)					; but also for the Y resolve it to
+	ld		a,(GAME._prevy+1)			; but also for the Y resolve it to
 	sub		14							; the start of a character cell...
 	and		$f8							; ...by removing bottom 3 bits. 7->0, 13->8, 21->16 etc
 	ld		b,a
