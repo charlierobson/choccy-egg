@@ -23,6 +23,25 @@ _run:
 	ld		(_state),a
 
 _loop:
+	ld		b,0
+	ld		a,(INPUT._fire)
+	srl		a
+	rr		b
+	ld		a,(INPUT._right)
+	srl		a
+	rr		b
+	ld		a,(INPUT._left)
+	srl		a
+	rr		b
+	ld		a,(INPUT._down)
+	srl		a
+	rr		b
+	ld		a,(INPUT._up)
+	srl		a
+	rr		b
+	ld		a,b
+	ld		(_inputs),a
+
 	ld		hl,_state					; motion state, try and keep hl set to this for entire loop
 
 	ld		bc,(_x)						; keep previous position around for undrawing purposes
@@ -65,21 +84,19 @@ _updateMovement:
 	jp		nz,_inAirUpdate
 
 	bit		3,(hl)
-	;call	nz,_onLadderUpdate
+	jp		nz,_onLadderUpdate
 
 _onGroundUpdate:
-	ld		bc,(_xforce)				; halve the x force each time, or better: subtract and clamp
+	ld		bc,(_xforce)				; halve the x force each time
 	sra		b
 	rr		c
-	ld		(_xforce),bc
-
-	ld		a,(INPUT._up) ; hack
-	and		3
-	cp		1
+	ld		a,b
+	cp		c
 	jr		nz,{+}
-	ld		bc,$3700
-	ld		(_y),bc
-+:
+	cp		$ff
+	jr		nz,{+}
+	ld		bc,0
++:	ld		(_xforce),bc
 
 	ld		a,(INPUT._left)
 	and		1
@@ -87,7 +104,7 @@ _onGroundUpdate:
 
 	ld		a,2							; face left
 	ld		(_animState),a
-	ld		bc,$ff00		; replace with call to addForceClampedTo1
+	ld		bc,$ff00		; replace with call to addForceClampedTo1?
 	ld		(_xforce),bc
 
 +:	ld		a,(INPUT._right)
@@ -130,7 +147,18 @@ _inAirUpdate:
 
 _inAirMove:
 	call	_updatePosition
+
 	ld		a,(iy)
+	ld		b,a
+	res		6,a
+	cp		TILES._LADDERA
+	jr		nz,{+}
+
+	ld		a,(_inputs)
+	and		%11000000
+	jp		nz,_mountLadder
+
++:	ld		a,b
 	and		$40
 	call	nz,_stopFall
 
@@ -170,6 +198,86 @@ _stopFall:
 
 
 
+_onLadderUpdate:
+	ld		bc,$0000
+
+	ld		a,(INPUT._up)
+	and		1
+	jr		z,{+}
+
+	ld		iy,(_mapAddrAtFootAfterMove)
+	ld		a,(iy-32)
+	cp		TILES._AIR
+	jr		z,{+}
+
+	ld		bc,$ff00
+
++:	ld		a,(INPUT._down)
+	and		1
+	jr		z,{+}
+
+	ld		bc,$0100
+
++:	ld		(_yforce),bc
+	call	_updatePosition
+
+	ld		a,(iy)
+	cp		TILES._GROUND
+	jr		nz,{+}
+
+	call	_cancelUpdatePosition
+
++:	ld		a,(_inputs)
+	ld		b,a
+	and		%00110000
+	jr		z,{+}
+
+	ld		a,(_y+1)
+	and		7
+	cp		7
+	jr		nz,{+}
+
+	ld		a,(iy+32)
+	and		$40
+	jp		nz,_dismountLadder
+
++:	ret
+
+
+_mountLadder:
+	ld		a,%00001000					; on ladder
+	ld		(_state),a
+	ld		a,(_x+1)
+	ld		bc,0
+	ld		(_x),bc
+	ld		(_xforce),bc
+	ld		(_yforce),bc
+
+	and		%11111000
+	or		4
+	ld		(_x+1),a
+	ret
+
+_dismountLadder:
+	xor		a
+	ld		(_state),a
+	ld		a,(_x+1)
+	or		7
+
+	bit		5,b							; left
+	jr		z,{+}
+
+	sub		8
+
++:	bit		4,b							; right
+	jr		z,{+}
+
+	inc		a
+
++:	ld		(_x+1),a
+	ret
+
+
 _updatePosition:
 	call	MAPS._getAddrAtFoot			; see what's there at current position
 	ld		(_mapAddrAtFootBeforeMove),iy
@@ -195,263 +303,6 @@ _cancelUpdatePosition:
 	ld		(_y),bc
 	ret
 
-
-
-.endasm
-;
-;	bit		5,(hl)						; are we in the air?
-;	jp		nz,_inAir
-;
-;	bit		3,(hl)						; are we in the air?
-;	jp		nz,_onLadder
-;
-;	; not in air or on ladder, must be...
-;
-;_onGround:
-;	res		7,(hl)						; not moving. use bits to indicate horizontal movement
-;	res		6,(hl)						; so that we can apply it when jumping/falling
-;
-;	; check to see whether we're falling
-;
-;	call	_solidCheck
-;	jr		z,_stillOnGround
-;
-;	set		4,(hl)						; wandered off into space
-;	set		5,(hl)						; set in air/falling bits, jump table offset
-;	ld		a,jtFallIdx
-;	ld		(_counter),a
-;	jp		_updates
-;
-;_stillOnGround:
-;	ld		a,(_tileBelowFoot)
-;	res		6,a
-;	cp		TILES._LADDERA				; ladder meat
-;	jr		nz,_checkAscend
-;
-;_checkDescend:
-;	ld		a,(INPUT._down)
-;	and		1
-;	jr		z,_checkAscend
-;
-;_mountLadder:
-;	set		3,(hl)						; we're on a ladder now..!
-;	res		6,(hl)
-;	res		7,(hl)
-;	res		5,(hl)
-;	res		4,(hl)
-;	ld		a,(_x)
-;	and		$f8
-;	or		4
-;	ld		(_x),a
-;	jp		_updates
-;
-;_checkAscend:
-;	ld		a,(_tileAtFoot)
-;	res		6,a
-;	cp		TILES._LADDERA
-;	jr		nz,_checkLeft
-;
-;	ld		a,(INPUT._up)
-;	and		1
-;	jr		nz,_mountLadder
-;
-;_checkLeft:
-;	ld		a,(INPUT._left)
-;	and		1
-;	jr		z,_checkRight
-;
-;	set		7,(hl)						; he's a-walkin' left
-;	set		1,(hl)
-;
-;_checkRight:
-;	ld		a,(INPUT._right)
-;	and		1
-;	jr		z,_checkJump
-;
-;	set		6,(hl)						; he's a-walkin' right
-;	res		1,(hl)
-;
-;_checkJump:
-;	ld		a,(INPUT._fire)
-;	and		3
-;	cp		1
-;	jp		nz,_updates
-;
-;	set		5,(hl)						; in the air
-;	xor		a							; reset jumping table index
-;	ld		(_counter),a
-;	jp		_updates
-;
-;
-;
-;_inAir:
-;	ld		a,(_tileAtFoot)
-;	res		6,a
-;	cp		TILES._LADDERA
-;	jr		nz,_noCheckClimb
-;
-;	ld		a,(INPUT._up)
-;	and		1
-;	jp		nz,_mountLadder
-;
-;_noCheckClimb:
-;	ld		a,(_counter)			; whilst in air draw counter is offset into jumping table
-;	ld		(_jtOff),a					; self-modify
-;	inc		a
-;	cp		jtFallIdx					; is where we start falling
-;	jr		nz,{+}
-;
-;	set		4,(hl)						; set falling bit
-;
-;+:	cp		jtEndIdx					; is last entry, so stop advancing counter
-;	jr		z,_adjustY
-;
-;	ld		(_counter),a
-;
-;_adjustY:
-;	ld		iy,_jumpTable
-;	ld		a,(_y)
-;_jtOff=$+2
-;	add		a,(iy+0)					; !self modifies!
-;	ld		(_y),a
-;
-;	bit		4,(hl)						; check ground if falling
-;	jp		z,_updates
-;
-;	call	_solidCheck
-;	jp		nz,_updates
-;
-;_soSolid:
-;	res		5,(hl)						; he's hit the ground, so stop falling,
-;	res		4,(hl)
-;	ld		a,(_y)					; adjust y pos to be on the ground (likely we were part way into it).
-;	and		%11111000
-;	ld		(_y),a
-;	jp		_updates
-;
-;
-;
-;
-;_onLadder:
-;	res		0,(hl)
-;	ld		b,0
-;	ld		a,(INPUT._right)
-;	srl		a
-;	rl		b
-;	ld		a,(INPUT._left)
-;	srl		a
-;	rl		b
-;
-;	ld		a,(INPUT._up)
-;	and		1
-;	jr		z,_noUp
-;
-;	ld		a,(_tileAtFoot)
-;	res		6,a
-;	cp		TILES._LADDERA
-;	jr		nz,_noUp
-;
-;	ld		a,(_y)
-;	dec		a
-;	ld		(_y),a
-;
-;_noUp:
-;	ld		a,(INPUT._down)
-;	and		1
-;	jr		z,_noDown
-;
-;	ld		a,(_tileAtFoot)
-;	res		6,a
-;	cp		TILES._LADDERA
-;	jr		nz,_noDown
-;
-;	ld		a,(_y)
-;	inc		a
-;	ld		(_y),a
-;
-;_noDown:
-;	ld		a,(INPUT._fire)
-;	and		3
-;	cp		1
-;	jr		nz,_noJumpOff
-;
-;	bit		0,b
-;	jr		z,_tryJumpOffRight
-;
-;	res		3,(hl)						; clear climbing bit
-;	set		7,(hl)						; set moving left, in air, facing left and offset
-;	set		5,(hl)
-;	set		1,(hl)
-;	xor		a
-;	ld		(_counter),a
-;	ld		a,(_x)					; move off ladder
-;	sub		4
-;	ld		(_x),a
-;	jp		_updates
-;
-;_tryJumpOffRight:
-;	bit		1,b
-;	jr		z,_noJumpOff
-;
-;	res		3,(hl)						; clear climbing bit
-;	set		6,(hl)						; set moving right bit, in air bit and offset
-;	set		5,(hl)
-;	res		1,(hl)						; clear facing left
-;	xor		a
-;	ld		(_counter),a
-;	ld		a,(_x)					; move off ladder
-;	add		a,4
-;	ld		(_x),a
-;	jp		_updates
-;
-;_noJumpOff:
-;	ld		a,(_y)
-;	and		7
-;	jp		nz,_updates
-;
-;	ld		a,b							; cached l/r buttons
-;	and		3
-;	jp		z,_updates
-;
-;	res		3,(hl)						; just walk off
-;	jp		_updates
-;
-;
-;
-;; returns with z set if ground underfoot is solid
-;_solidCheck:
-;	ld		a,(_tileBelowFoot)
-;	xor		$ff
-;	bit		6,a
-;	ret
-;
-;
-;
-;_updateHoriz:
-;	ld		a,(_x)
-;
-;	bit		7,(hl)						; moving left?
-;	jr		z,{+}
-;
-;	cp		6
-;	ret		z
-;
-;	dec		a
-;	ld		(_x),a
-;	ret
-;
-;+:	bit		6,(hl)						; moving right?
-;	ret		z
-;
-;	cp		250
-;	ret		z
-;
-;	inc		a
-;	ld		(_x),a
-;	ret
-;
-;
-.asm
 
 _gameOver:
 	ld		a,2
@@ -485,6 +336,8 @@ _mapAddrAtFootBeforeMove:
 _mapAddrAtFootAfterMove:
 	.word	 0
 
+_inputs:
+	.byte	0
 
 ; bit 7 - moving left
 ; bit 6 - moving right
@@ -505,6 +358,7 @@ _debugOutput:
 	push	hl
 
 	ld		iy,(_mapAddrAtFootAfterMove)
+	ld		e,(iy-32)
 	ld		b,(iy)
 	ld		c,(iy+32)
 
@@ -513,37 +367,41 @@ _debugOutput:
 	ld		(iy),a
 
 	ld		iy,DISPLAY._dfilehr+(4*32)
-	ld		a,b
+	ld		a,e
 	call	DRAW._TILE
 
 	ld		iy,DISPLAY._dfilehr+(12*32)
+	ld		a,b
+	call	DRAW._TILE
+
+	ld		iy,DISPLAY._dfilehr+(20*32)
 	ld		a,c
 	call	DRAW._TILE
 
-	ld		iy,DISPLAY._dfilehr+(21*32)
-	ld		a,$ff
-	ld		(iy),a
-
-	ld		iy,DISPLAY._dfilehr+2
-	ld		(pr_cc),iy
-	ld		a,(_x+1)
-	call	DRAW._HEX
-	ld		a,(_y+1)
-	call	DRAW._HEX
-
-	ld		iy,DISPLAY._dfilehr+2+320
-	ld		(pr_cc),iy
-	ld		a,(_xforce+1)
-	call	DRAW._HEX
-	ld		a,(_xforce)
-	call	DRAW._HEX
-
-	ld		iy,DISPLAY._dfilehr+7+320
-	ld		(pr_cc),iy
-	ld		a,(_yforce+1)
-	call	DRAW._HEX
-	ld		a,(_yforce)
-	call	DRAW._HEX
+;	ld		iy,DISPLAY._dfilehr+(29*32)
+;	ld		a,$ff
+;	ld		(iy),a
+;
+;	ld		iy,DISPLAY._dfilehr+2
+;	ld		(pr_cc),iy
+;	ld		a,(_x+1)
+;	call	DRAW._HEX
+;	ld		a,(_y+1)
+;	call	DRAW._HEX
+;
+;	ld		iy,DISPLAY._dfilehr+2+320
+;	ld		(pr_cc),iy
+;	ld		a,(_xforce+1)
+;	call	DRAW._HEX
+;	ld		a,(_xforce)
+;	call	DRAW._HEX
+;
+;	ld		iy,DISPLAY._dfilehr+7+320
+;	ld		(pr_cc),iy
+;	ld		a,(_yforce+1)
+;	call	DRAW._HEX
+;	ld		a,(_yforce)
+;	call	DRAW._HEX
 
 	pop		hl
 	pop		iy
