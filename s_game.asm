@@ -98,6 +98,48 @@ _onGroundUpdate:
 	ld		bc,0
 +:	ld		(_xforce),bc
 
+	call	_checkLeftRight
+
+_checkDown:
+	ld		a,(INPUT._down)
+	and		1
+	jr		z,_checkUp
+
+	ld		iy,(_mapAddrAtFootAfterMove)
+	ld		a,(iy)
+	cp		TILES._LADDERA
+	jr		nz,_checkUp
+	ld		a,(iy+32)
+	cp		TILES._LADDERS
+	jr		nz,_checkUp
+
+	jp		_mountLadder
+
+_checkUp:
+	ld		a,(INPUT._down)
+	and		1
+	jr		z,_checkJump
+
+_checkJump:
+	ld		a,(INPUT._fire)
+	and		3
+	cp		1
+	jr		nz,_move
+
+	call	_jump
+	call	_updatePosition
+	ret
+
+
+_move:
+	call	_updatePosition
+	ld		a,(iy+32)
+	and		$C0
+	call	z,_startFall
+	ret
+
+
+_checkLeftRight:
 	ld		a,(INPUT._left)
 	and		1
 	jr		z,{+}
@@ -109,38 +151,28 @@ _onGroundUpdate:
 
 +:	ld		a,(INPUT._right)
 	and		1
-	jr		z,_checkJump
+	ret		z
 
 	ld		a,0							; face right
 	ld		(_animState),a
 	ld		bc,$0100		; replace with call to addForceClampedTo1
 	ld		(_xforce),bc
+	ret
 
-_checkJump:
-	ld		a,(INPUT._fire)
-	and		3
-	cp		1
-	jr		nz,_move
 
-	ld		bc,$fd80
+
+_jump:
+	ld		a,%00100000
+	ld		(_state),a
+	ld		bc,$fe80
 	ld		(_yforce),bc
-	set		5,(hl)
-	call	_updatePosition
 	ret
-
-_move:
-	call	_updatePosition
-	ld		a,(iy+32)
-	and		$C0
-	call	z,_startFall
-	ret
-
 
 
 _inAirUpdate:
 	push	hl
 	ld		hl,(_yforce)
-	ld		bc,$0040
+	ld		bc,$0020
 	add		hl,bc
 	ld		(_yforce),hl
 	pop		hl
@@ -158,7 +190,11 @@ _inAirMove:
 	and		%11000000
 	jp		nz,_mountLadder
 
-+:	ld		a,b
++:	ld		a,(_yforce+1)				; only check for floor when falling
+	bit		7,a
+	ret		nz
+
+	ld		a,b
 	and		$40
 	call	nz,_stopFall
 
@@ -230,7 +266,7 @@ _onLadderUpdate:
 +:	ld		a,(_inputs)
 	ld		b,a
 	and		%00110000
-	jr		z,{+}
+	jr		z,_noDismount
 
 	ld		a,(_y+1)
 	and		7
@@ -241,7 +277,15 @@ _onLadderUpdate:
 	and		$40
 	jp		nz,_dismountLadder
 
-+:	ret
++:	bit		3,b							; jumping off?
+	jr		z,_noDismount
+
+	call	_dismountLadder
+	call	_jump
+	call	_checkLeftRight
+
+_noDismount:
+	ret
 
 
 _mountLadder:
