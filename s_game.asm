@@ -133,7 +133,25 @@ _checkJump:
 
 _move:
 	call	_updatePosition
-	ld		a,(iy+32)
+	ld		a,(_x+1)
+	cp		7
+	jr		nc,{+}	
+
+	ld		a,6
+	ld		(_x+1),a
+	xor		a
+	ld		(_x),a
+
++:	ld		a,(_x+1)
+	cp		250
+	jr		c,{+}	
+
+	ld		a,250
+	ld		(_x+1),a
+	xor		a
+	ld		(_x),a
+
++:	ld		a,(iy+32)
 	and		$C0
 	call	z,_startFall
 	ret
@@ -146,6 +164,7 @@ _checkLeftRight:
 
 	ld		a,2							; face left
 	ld		(_animState),a
+
 	ld		bc,$ff00		; replace with call to addForceClampedTo1?
 	ld		(_xforce),bc
 
@@ -171,41 +190,78 @@ _jump:
 
 _inAirUpdate:
 	push	hl
-	ld		hl,(_yforce)
+	ld		hl,(_yforce)				; 'gravity'
 	ld		bc,$0020
 	add		hl,bc
 	ld		(_yforce),hl
 	pop		hl
 
-_inAirMove:
 	call	_updatePosition
 
-	ld		a,(iy)
+	ld		a,(_x+1)
+	cp		7
+	jr		nc,{+}
+
+	ld		a,6
+	ld		(_x+1),a
+	ld		a,(_xforce)
+	neg
+	ld		(_xforce),a
+	ld		a,(_xforce+1)
+	neg
+	ld		(_xforce+1),a
+
++:	ld		a,(_x+1)
+	cp		250
+	jr		c,{+}
+
+	ld		a,250
+	ld		(_x+1),a
+	ld		a,(_xforce)
+	neg
+	ld		(_xforce),a
+	ld		a,(_xforce+1)
+	neg
+	ld		(_xforce+1),a
+
++:	ld		a,(iy)						; can land on a ladder iff there is ladder at foot and head
 	ld		b,a
 	res		6,a
 	cp		TILES._LADDERA
-	jr		nz,{+}
+	jr		nz,_noLadderLanding
+	ld		a,(iy-32)
+	ld		b,a
+	res		6,a
+	cp		TILES._LADDERA
+	jr		nz,_noLadderLanding
 
-	ld		a,(_inputs)
+	ld		a,(_inputs)					; can land if up or down pressed
 	and		%11000000
-	jp		nz,_mountLadder
+	jr		z,_noLadderLanding
 
-+:	ld		a,(_yforce+1)				; only check for floor when falling
+	call	_mountLadder
+	call	_updateMapAddrAtFoot
+	ret
+
+_noLadderLanding:
+	ld		a,(_yforce+1)				; only check for floor when falling
 	bit		7,a
 	ret		nz
 
-	ld		a,b
-	and		$40
-	call	nz,_stopFall
+	bit		6,b							; solidity check
+	ret		z
 
+	call	_stopFall
+	call	_updateMapAddrAtFoot
 	ret
 
 
 _startFall:
-	ld		bc,(_xforce)				; halve the x force each time, or better: subtract and clamp
+	ld		bc,(_xforce)				; halve the x force
 	sra		b
 	rr		c
 	ld		(_xforce),bc
+
 	ld		bc,$0100
 	ld		(_yforce),bc
 	ld		(hl),%00110000				; state = in air/falling
@@ -305,6 +361,10 @@ _mountLadder:
 _dismountLadder:
 	xor		a
 	ld		(_state),a
+	ld		(_xforce),a
+	ld		(_xforce+1),a
+	ld		(_yforce),a
+	ld		(_yforce+1),a
 	ld		a,(_x+1)
 	or		7
 
@@ -323,7 +383,7 @@ _dismountLadder:
 
 
 _updatePosition:
-	call	MAPS._getAddrAtFoot			; see what's there at current position
+	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		(_mapAddrAtFootBeforeMove),iy
 
 	ld		iy,(_x)
@@ -336,6 +396,7 @@ _updatePosition:
 	add		iy,bc
 	ld		(_y),iy
 
+_updateMapAddrAtFoot:
 	call	MAPS._getAddrAtFoot
 	ld		(_mapAddrAtFootAfterMove),iy
 	ret
@@ -422,30 +483,30 @@ _debugOutput:
 	ld		a,c
 	call	DRAW._TILE
 
-;	ld		iy,DISPLAY._dfilehr+(29*32)
-;	ld		a,$ff
-;	ld		(iy),a
-;
+	ld		iy,DISPLAY._dfilehr+(29*32)
+	ld		a,$ff
+	ld		(iy),a
+
 ;	ld		iy,DISPLAY._dfilehr+2
 ;	ld		(pr_cc),iy
 ;	ld		a,(_x+1)
 ;	call	DRAW._HEX
 ;	ld		a,(_y+1)
 ;	call	DRAW._HEX
-;
-;	ld		iy,DISPLAY._dfilehr+2+320
-;	ld		(pr_cc),iy
-;	ld		a,(_xforce+1)
-;	call	DRAW._HEX
-;	ld		a,(_xforce)
-;	call	DRAW._HEX
-;
-;	ld		iy,DISPLAY._dfilehr+7+320
-;	ld		(pr_cc),iy
-;	ld		a,(_yforce+1)
-;	call	DRAW._HEX
-;	ld		a,(_yforce)
-;	call	DRAW._HEX
+
+	ld		iy,DISPLAY._dfilehr+2+320
+	ld		(pr_cc),iy
+	ld		a,(_xforce+1)
+	call	DRAW._HEX
+	ld		a,(_xforce)
+	call	DRAW._HEX
+
+	ld		iy,DISPLAY._dfilehr+7+320
+	ld		(pr_cc),iy
+	ld		a,(_yforce+1)
+	call	DRAW._HEX
+	ld		a,(_yforce)
+	call	DRAW._HEX
 
 	pop		hl
 	pop		iy
