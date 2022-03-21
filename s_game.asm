@@ -111,14 +111,17 @@ _checkDown:
 	jr		nz,_checkUp
 	ld		a,(iy+32)
 	cp		TILES._LADDERS
-	jr		nz,_checkUp
-
-	jp		_mountLadder
+	jp		z,_mountLadder
 
 _checkUp:
-	ld		a,(INPUT._down)
+	ld		a,(INPUT._up)
 	and		1
 	jr		z,_checkJump
+
+	ld		iy,(_mapAddrAtFootAfterMove)
+	ld		a,(iy)
+	cp		TILES._LADDERA
+	jp		z,_mountLadder
 
 _checkJump:
 	ld		a,(INPUT._fire)
