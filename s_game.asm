@@ -233,7 +233,6 @@ _inAirUpdate:
 	cp		TILES._LADDERA
 	jr		nz,_noLadderLanding
 	ld		a,(iy-32)
-	ld		b,a
 	res		6,a
 	cp		TILES._LADDERA
 	jr		nz,_noLadderLanding
@@ -334,7 +333,11 @@ _onLadderUpdate:
 
 	ld		a,(iy+32)
 	and		$40
-	jp		nz,_dismountLadder
+	jr		z,{+}
+
+_aaaa:
+	call	_dismountLadder
+	jp		_updatePosition
 
 +:	bit		3,b							; jumping off?
 	jr		z,_noDismount
