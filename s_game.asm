@@ -271,10 +271,6 @@ _startFall:
 
 
 _stopFall:
-	ld		bc,$0000
-	ld		(_yforce),bc
-	ld		(hl),%00000000				; state = on ground
-
 	ld		bc,(_y)
 	ld		a,b
 	and		7							; are we part way into the ground below us?
@@ -288,6 +284,9 @@ _stopFall:
 
 +:	ld		c,0							; delete fractional part
 	ld		(_y),bc
+	ld		bc,$0000
+	ld		(_yforce),bc
+	ld		(hl),%00000000				; state = on ground
 	ret
 
 
@@ -335,12 +334,18 @@ _onLadderUpdate:
 	and		$40
 	jr		z,{+}
 
-_aaaa:
 	call	_dismountLadder
 	jp		_updatePosition
 
 +:	bit		3,b							; jumping off?
 	jr		z,_noDismount
+
+	ld		a,(iy-32)
+	cp		8
+	ret		nz
+	ld		a,(iy)
+	cp		8
+	ret		nz
 
 	call	_dismountLadder
 	call	_jump
@@ -469,27 +474,42 @@ _debugOutput:
 	push	hl
 
 	ld		iy,(_mapAddrAtFootAfterMove)
-	ld		e,(iy-32)
-	ld		b,(iy)
-	ld		c,(iy+32)
+	ld		a,(iy+1)
+	push	af
+	ld		a,(iy-1)
+	push	af
+	ld		a,(iy+32)
+	push	af
+	ld		a,(iy)
+	push	af
+	ld		a,(iy-32)
+	push	af
 
-	ld		iy,DISPLAY._dfilehr+(2*32)
+	ld		iy,DISPLAY._dfilehr+(2*32+1)
 	ld		a,$ff
 	ld		(iy),a
 
-	ld		iy,DISPLAY._dfilehr+(4*32)
-	ld		a,e
+	ld		iy,DISPLAY._dfilehr+(4*32+1)
+	pop		af
+	call	DRAW._TILE
+
+	ld		iy,DISPLAY._dfilehr+(12*32+1)
+	pop		af
+	call	DRAW._TILE
+
+	ld		iy,DISPLAY._dfilehr+(20*32+1)
+	pop		af
 	call	DRAW._TILE
 
 	ld		iy,DISPLAY._dfilehr+(12*32)
-	ld		a,b
+	pop		af
 	call	DRAW._TILE
 
-	ld		iy,DISPLAY._dfilehr+(20*32)
-	ld		a,c
+	ld		iy,DISPLAY._dfilehr+(12*32+2)
+	pop		af
 	call	DRAW._TILE
 
-	ld		iy,DISPLAY._dfilehr+(29*32)
+	ld		iy,DISPLAY._dfilehr+(29*32+1)
 	ld		a,$ff
 	ld		(iy),a
 
@@ -499,20 +519,20 @@ _debugOutput:
 ;	call	DRAW._HEX
 ;	ld		a,(_y+1)
 ;	call	DRAW._HEX
-
-	ld		iy,DISPLAY._dfilehr+2+320
-	ld		(pr_cc),iy
-	ld		a,(_xforce+1)
-	call	DRAW._HEX
-	ld		a,(_xforce)
-	call	DRAW._HEX
-
-	ld		iy,DISPLAY._dfilehr+7+320
-	ld		(pr_cc),iy
-	ld		a,(_yforce+1)
-	call	DRAW._HEX
-	ld		a,(_yforce)
-	call	DRAW._HEX
+;
+;	ld		iy,DISPLAY._dfilehr+2+320
+;	ld		(pr_cc),iy
+;	ld		a,(_xforce+1)
+;	call	DRAW._HEX
+;	ld		a,(_xforce)
+;	call	DRAW._HEX
+;
+;	ld		iy,DISPLAY._dfilehr+7+320
+;	ld		(pr_cc),iy
+;	ld		a,(_yforce+1)
+;	call	DRAW._HEX
+;	ld		a,(_yforce)
+;	call	DRAW._HEX
 
 	pop		hl
 	pop		iy
