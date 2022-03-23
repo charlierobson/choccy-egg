@@ -1,15 +1,14 @@
 	.module TILES
+
 _AIR = $00
-_LADDERA = $08
-_LADDERLA = $10
-_LADDERRA = $18
 _EGG = $20
 _SEED = $28
 
 _GROUND = $40
-_LADDERS = $48
-_LADDERLS = $48
-_LADDERRS = $48
+_LADDERL = $70
+_LADDERR = $78
+
+_LADDER = $30
 
 	.align	256
 _START:
@@ -22,33 +21,6 @@ _START:
 	.byte	$00		; '        '
 	.byte	$00		; '        '
 	.byte	$00		; '        '
-
-	.byte	$00		; '        '
-	.byte	$00		; '        '
-	.byte	$00		; '        '
-	.byte	$00		; '        '
-	.byte	$ff		; '########'
-	.byte	$ff		; '########'
-	.byte	$00		; '        '
-	.byte	$00		; '        '
-
-	.byte	$06		; '     ## '
-	.byte	$06		; '     ## '
-	.byte	$06		; '     ## '
-	.byte	$06		; '     ## '
-	.byte	$07		; '     ###'
-	.byte	$07		; '     ###'
-	.byte	$06		; '     ## '
-	.byte	$06		; '     ## '
-
-	.byte	$60		; ' ##     '
-	.byte	$60		; ' ##     '
-	.byte	$60		; ' ##     '
-	.byte	$60		; ' ##     '
-	.byte	$e0		; '###     '
-	.byte	$e0		; '###     '
-	.byte	$60		; ' ##     '
-	.byte	$60		; ' ##     '
 
 	.byte	$00		; '        '
 	.byte	$00		; '        '
@@ -69,8 +41,17 @@ _START:
 	.byte	$55		; ' # # # #'
 
 	.byte	$00		; '        '
+	.byte	$80		; '        '
 	.byte	$00		; '        '
 	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$80		; '        '
 	.byte	$00		; '        '
 	.byte	$00		; '        '
 	.byte	$00		; '        '
@@ -80,45 +61,98 @@ _START:
 	.byte	$00		; '        '
 	.byte	$00		; '        '
 	.byte	$00		; '        '
-	.byte	$00		; '        '
+	.byte	$80		; '        '
 	.byte	$00		; '        '
 	.byte	$00		; '        '
 	.byte	$00		; '        '
 	.byte	$00		; '        '
 
-	.byte	$f7		; '#### ###'
-	.byte	$00		; '        '
-	.byte	$df		; '## #####'
-	.byte	$00		; '        '
+	.byte	$30		; '  ##    '
+	.byte	$30		; '  ##    '
+	.byte	$30		; '  ##    '
+	.byte	$30		; '  ##    '
+	.byte	$3f		; '  ######'
+	.byte	$3f		; '  ######'
+	.byte	$30		; '  ##    '
+	.byte	$30		; '  ##    '
+
+	.byte	$0c		; '    ##  '
+	.byte	$0c		; '    ##  '
+	.byte	$0c		; '    ##  '
+	.byte	$0c		; '    ##  '
+	.byte	$fc		; '######  '
+	.byte	$fc		; '######  '
+	.byte	$0c		; '    ##  '
+	.byte	$0c		; '    ##  '
+
 	.byte	$fb		; '##### ##'
 	.byte	$00		; '        '
+	.byte	$bf		; '# ######'
 	.byte	$00		; '        '
-	.byte	$00		; '        '
-
-	.byte	$f7		; '#### ###'
-	.byte	$00		; '        '
-	.byte	$df		; '## #####'
-	.byte	$00		; '        '
-	.byte	$ff		; '########'
-	.byte	$ff		; '########'
-	.byte	$00		; '        '
-	.byte	$00		; '        '
-
-	.byte	$76		; ' ### ## '
-	.byte	$06		; '     ## '
-	.byte	$f6		; '#### ## '
-	.byte	$06		; '     ## '
-	.byte	$b7		; '# ## ###'
-	.byte	$07		; '     ###'
-	.byte	$06		; '     ## '
-	.byte	$06		; '     ## '
-
-	.byte	$6f		; ' ## ####'
-	.byte	$60		; ' ##     '
-	.byte	$6d		; ' ## ## #'
-	.byte	$60		; ' ##     '
 	.byte	$ef		; '### ####'
-	.byte	$e0		; '###     '
-	.byte	$60		; ' ##     '
-	.byte	$60		; ' ##     '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
 
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$80		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$80		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$80		; '        '
+	.byte	$00		; '        '
+
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$80		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$80		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+
+	.byte	$33		; '  ##  ##'
+	.byte	$30		; '  ##    '
+	.byte	$37		; '  ## ###'
+	.byte	$30		; '  ##    '
+	.byte	$3f		; '  ######'
+	.byte	$3f		; '  ######'
+	.byte	$30		; '  ##    '
+	.byte	$30		; '  ##    '
+
+	.byte	$ec		; '### ##  '
+	.byte	$0c		; '    ##  '
+	.byte	$ac		; '# # ##  '
+	.byte	$0c		; '    ##  '
+	.byte	$fc		; '######  '
+	.byte	$fc		; '######  '
+	.byte	$0c		; '    ##  '
+	.byte	$0c		; '    ##  '

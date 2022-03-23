@@ -51,6 +51,18 @@ _loop:
 
 	call	_updateMovement
 
+	ld		a,(_y+1)
+	cp		191
+	jr		c,{+}						; ok
+_aaa:
+	ld		a,191						; oh dear oh dead
+	call	_setY
+	jp		_gameOver
+
++:	ld		a,(_state)
+	cp		$ff
+	jp		z,_gameOver
+
 	ld		a,(_animState)
 	ld		b,a
 	srl		b
@@ -107,10 +119,12 @@ _checkDown:
 
 	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		a,(iy)
-	cp		TILES._LADDERA
+	and		$30
+	cp		TILES._LADDER
 	jr		nz,_checkUp
 	ld		a,(iy+32)
-	cp		TILES._LADDERS
+	and		$30
+	cp		TILES._LADDER
 	jp		z,_mountLadder
 
 _checkUp:
@@ -120,7 +134,8 @@ _checkUp:
 
 	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		a,(iy)
-	cp		TILES._LADDERA
+	and		$30
+	cp		TILES._LADDER
 	jp		z,_mountLadder
 
 _checkJump:
@@ -229,12 +244,12 @@ _inAirUpdate:
 
 +:	ld		a,(iy)						; can land on a ladder iff there is ladder at foot and head
 	ld		b,a
-	res		6,a
-	cp		TILES._LADDERA
+	and		$30
+	cp		TILES._LADDER
 	jr		nz,_noLadderLanding
 	ld		a,(iy-32)
-	res		6,a
-	cp		TILES._LADDERA
+	and		$30
+	cp		TILES._LADDER
 	jr		nz,_noLadderLanding
 
 	ld		a,(_inputs)					; can land if up or down pressed
@@ -339,12 +354,12 @@ _onLadderUpdate:
 
 +:	bit		3,b							; jumping off?
 	jr		z,_noDismount
-
+	cp		TILES._LADDERL
 	ld		a,(iy-32)
-	cp		8
+	cp		TILES._LADDERL
 	ret		nz
 	ld		a,(iy)
-	cp		8
+	cp		TILES._LADDERL
 	ret		nz
 
 	call	_dismountLadder
@@ -421,14 +436,35 @@ _cancelUpdatePosition:
 
 
 _gameOver:
+	call	DISPLAY._FRAMESYNC
+	call	DRAW._NOMAN					; undraw man at old position
+	call	DRAW._MAN					; draw man at new position
+
 	ld		a,2
 	call	AYFXPLAYER._PLAY
+
+	ld		b,75
+-:	call	DISPLAY._FRAMESYNC
+	djnz	{-}
 
 	call	DISPLAY._CLS
 	call	DISPLAY._SETUPLORES
 
 	ret
 
+
+
+_setX:
+	ld		(_x+1),a
+	xor		a
+	ld		(_x),a
+	ret
+
+_setY:
+	ld		(_y+1),a
+	xor		a
+	ld		(_y),a
+	ret
 
 
 ; 8.8 fixed point for man coords, forces
@@ -460,6 +496,7 @@ _inputs:
 ; bit 5 - in the air
 ; bit 4 - falling
 ; bit 3 - climbing
+; -1: dead
 _state:
 	.byte	0
 
@@ -513,13 +550,13 @@ _debugOutput:
 	ld		a,$ff
 	ld		(iy),a
 
-;	ld		iy,DISPLAY._dfilehr+2
-;	ld		(pr_cc),iy
-;	ld		a,(_x+1)
-;	call	DRAW._HEX
-;	ld		a,(_y+1)
-;	call	DRAW._HEX
-;
+	ld		iy,DISPLAY._dfilehr+2
+	ld		(pr_cc),iy
+	ld		a,(_x+1)
+	call	DRAW._HEX
+	ld		a,(_y+1)
+	call	DRAW._HEX
+
 ;	ld		iy,DISPLAY._dfilehr+2+320
 ;	ld		(pr_cc),iy
 ;	ld		a,(_xforce+1)

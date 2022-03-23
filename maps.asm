@@ -4,10 +4,10 @@
 ; which turns character codes into byte offsets into character set
 ;
 _level1:
-	.incbin	"data\cheg1.off"
+	.incbin	"data\cheg3.off"
 
 _level3:
-	.incbin	"data\cheg3.off"
+	.incbin	"data\cheg1.off"
 
 _title:
 	.incbin "data\title.binlz"
