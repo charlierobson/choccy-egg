@@ -164,18 +164,44 @@ _MAN:
 	ret
 
 
+_chx:
+	.byte	0
+
+_chy:
+	.byte	0
 
 ; draw 3x3 background tiles where the man _was_.
 ;
 _NOMAN:
-	ld		a,(GAME._prevx+1)			; move x,y to top left
+	ld		a,(GAME._prevx+1)			; move x to leftmost pixel of sprite
 	sub		6
 	ld		c,a
 
+	and		$f8							; to char cell
+	ld		e,a
+
+	ld		a,c
+	add		a,11
+	and		$f8
+	sub		e
+	srl		a
+	srl		a
+	srl		a
+	ld		(_chx),a
+
 	ld		a,(GAME._prevy+1)			; but also for the Y resolve it to
-	sub		14							; the start of a character cell...
+	ld		e,a
+	sub		13							; the start of a character cell...
 	and		$f8							; ...by removing bottom 3 bits. 7->0, 13->8, 21->16 etc
 	ld		b,a
+
+	ld		a,e							; calculate how many rows we need to clear
+	and		$f8
+	sub		b
+	srl		a
+	srl		a
+	srl		a
+	ld		(_chy),a
 
 	push	bc							; do the sums twice, once for bg map, once for screen.
 	srl		b							; save the modified position for the second go,
@@ -202,49 +228,64 @@ _NOMAN:
 	ld		iy,DISPLAY._dfilehr
 	add		iy,bc						; iy -> hires screen address
 
-	ld		a,(de)						; draw 3x3 tiles. we could work out if fewer tiles
+.define getbyte ld		a,(de)
+;.define getbyte ld		a,$20
+
+	getbyte							; draw 3x3 tiles. we could work out if fewer tiles
 	call	_TILE						; are necessary, but we'll leave that 'till we have to.
 	inc		de
 	inc		iy
-	ld		a,(de)
+	getbyte
 	call	_TILE
 	inc		de
 	inc		iy
-	ld		a,(de)
+	ld		a,(_chx)
+	dec		a
+	jr		z,{+}
+	getbyte
 	call	_TILE
 
-	ld		a,30						; de -> next row of map
++:	ld		a,30						; de -> next row of map
 	call	adda2de
 	ld		bc,(32*7)+30				; iy -> next _character_ row of hires display (8 x hires lines)
 	add		iy,bc
 
-	ld		a,(de)
+	getbyte
 	call	_TILE
 	inc		de
 	inc		iy
-	ld		a,(de)
+	getbyte
 	call	_TILE
 	inc		de
 	inc		iy
-	ld		a,(de)
+	ld		a,(_chx)
+	dec		a
+	jr		z,{+}
+	getbyte
 	call	_TILE
+
++:	ld		a,(_chy)
+	dec		a
+	ret		z
 
 	ld		a,30
 	call	adda2de
 	ld		bc,(32*7)+30
 	add		iy,bc
 
-	ld		a,(de)
+	getbyte
 	call	_TILE
 	inc		de
 	inc		iy
-	ld		a,(de)
+	getbyte
 	call	_TILE
 	inc		de
 	inc		iy
-	ld		a,(de)
+	ld		a,(_chx)
+	dec		a
+	ret		z
+	getbyte
 	call	_TILE
-
 	ret
 
 

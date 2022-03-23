@@ -90,6 +90,57 @@ _aaa:
 	jp		_loop
 
 
+_updateMovementX:
+	ld		a,(INPUT._up)
+	and		3
+	cp		1
+	jr		nz,{+}
+
+	ld		a,(_y+1)
+	dec		a
+	ld		(_y+1),a
+	ret
+
++:	ld		a,(INPUT._down)
+	and		3
+	cp		1
+	jr		nz,{+}
+
+	ld		a,(_y+1)
+	inc		a
+	ld		(_y+1),a
+	ret
+
++:	ld		a,(INPUT._left)
+	and		3
+	cp		1
+	jr		nz,{+}
+
+	ld		a,(_x+1)
+	dec		a
+	ld		(_x+1),a
+	ret
+
++:	ld		a,(INPUT._right)
+	and		3
+	cp		1
+	jr		nz,{+}
+
+	ld		a,(_x+1)
+	inc		a
+	ld		(_x+1),a
+	ret
+
++:	ld		a,(INPUT._fire)
+	and		3
+	cp		1
+	ret		nz
+
+	ld		hl,MAPS._level1
+	jp		DRAW._MAP
+
+
+
 
 _updateMovement:
 	bit		5,(hl)
@@ -553,8 +604,17 @@ _debugOutput:
 	ld		iy,DISPLAY._dfilehr+2
 	ld		(pr_cc),iy
 	ld		a,(_x+1)
+	and		7
 	call	DRAW._HEX
 	ld		a,(_y+1)
+	and		7
+	call	DRAW._HEX
+
+	ld		iy,DISPLAY._dfilehr+6
+	ld		(pr_cc),iy
+	ld		a,(DRAW._chx)
+	call	DRAW._HEX
+	ld		a,(DRAW._chy)
 	call	DRAW._HEX
 
 ;	ld		iy,DISPLAY._dfilehr+2+320
