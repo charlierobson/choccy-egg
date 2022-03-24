@@ -41,16 +41,16 @@ _debugOutput:
 	ld		a,(_x+1)
 	and		7
 	call	DRAW._HEX
-	ld		a,(_y+1)
-	and		7
-	call	DRAW._HEX
-
-	ld		iy,DISPLAY._dfilehr+6
-	ld		(pr_cc),iy
-	ld		a,(DRAW._chx)
-	call	DRAW._HEX
-	ld		a,(DRAW._chy)
-	call	DRAW._HEX
+;	ld		a,(_y+1)
+;	and		7
+;	call	DRAW._HEX
+;
+;	ld		iy,DISPLAY._dfilehr+8
+;	ld		(pr_cc),iy
+;	ld		a,(DRAW._chx)
+;	call	DRAW._HEX
+;	ld		a,(DRAW._chy)
+;	call	DRAW._HEX
 
 ;	ld		iy,DISPLAY._dfilehr+2+320
 ;	ld		(pr_cc),iy

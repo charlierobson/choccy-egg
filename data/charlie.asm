@@ -2,7 +2,7 @@
 
 ; in
 ; b = x & 7
-; a = frame num (bit 0 walk, bit 1 l/r facing)
+; a = frame num (bit 0 walk, bit 1 l/r facing, bit 3 climb)
 
 ; eg: 
 ; a = 0, b = 1
@@ -22,7 +22,7 @@
 ; a * 2 = 6 ->  _frame31
 ;
 _getFrame:
-	ld		hl,_charlieFrames
+	ld		hl,_walkFrames
 	sla		a
 	ld		c,a							; stash a*2 for later
 
@@ -41,7 +41,7 @@ _getFrame:
 	ld		l,a
 	ret									; hl -> sprite pixel data
 
-_charlieFrames:
+_walkFrames:
 	.word	_frame00,_frame10		; facing right still, facing right run     shifted right by 0
 	.word	_frame20,_frame30		; facing left still,  facing left run
 
@@ -66,9 +66,19 @@ _charlieFrames:
 	.word	_frame07,_frame17
 	.word	_frame27,_frame37
 
+_climbFrames:
+	.word	_climb0,_climb1
+	.word	_climb0,_climb1
 
+	.word	_climb0,_climb1
+	.word	_climb0,_climb1
 
-_charlie0:
+	.word	_climb0,_climb1
+	.word	_climb0,_climb1
+
+	.word	_climb0,_climb1
+	.word	_climb0,_climb1
+
 _frame00:
 	.byte	$0e,$00,$00		; '    ###                 '
 	.byte	$0f,$00,$00		; '    ####                '
@@ -552,3 +562,66 @@ _frame37:
 	.byte	$00,$1e,$00		; '           ####         '
 	.byte	$00,$51,$00		; '         # #   #        '
 	.byte	$00,$22,$00		; '          #   #         '
+
+; _climb0:
+; 	.byte	$01,$80,$00		; '       ##       '
+; 	.byte	$03,$c0,$00		; '      ####      '
+; 	.byte	$03,$c0,$00		; '      ####      '
+; 	.byte	$3f,$fc,$00		; '  ############  '
+; 	.byte	$03,$c0,$00		; '      ####      '
+; 	.byte	$03,$d0,$00		; '      #### #    '
+; 	.byte	$01,$90,$00		; '       ##  #    '
+; 	.byte	$07,$f0,$00		; '     #######    '
+; 	.byte	$0f,$f0,$00		; '    ########    '
+; 	.byte	$0f,$f0,$00		; '    ########    '
+; 	.byte	$0f,$e0,$00		; '    #######     '
+; 	.byte	$0b,$c0,$00		; '    # ####      '
+; 	.byte	$02,$e0,$00		; '      # ###     '
+; 	.byte	$06,$00,$00		; '     ##         '
+
+; _climb1:
+; 	.byte	$01,$80,$00		; '       ##       '
+; 	.byte	$03,$c0,$00		; '      ####      '
+; 	.byte	$03,$c0,$00		; '      ####      '
+; 	.byte	$3f,$fc,$00		; '  ############  '
+; 	.byte	$03,$c0,$00		; '      ####      '
+; 	.byte	$0b,$c0,$00		; '    # ####      '
+; 	.byte	$09,$80,$00		; '    #  ##       '
+; 	.byte	$0f,$e0,$00		; '    #######     '
+; 	.byte	$0f,$f0,$00		; '    ########    '
+; 	.byte	$0f,$f0,$00		; '    ########    '
+; 	.byte	$07,$f0,$00		; '     #######    '
+; 	.byte	$03,$d0,$00		; '      #### #    '
+; 	.byte	$07,$40,$00		; '     ### #      '
+; 	.byte	$00,$60,$00		; '         ##     '
+_climb0:
+	.byte	$01,$80,$00		; '       ##               '
+	.byte	$03,$c0,$00		; '      ####              '
+	.byte	$03,$c0,$00		; '      ####              '
+	.byte	$3f,$fc,$00		; '  ############          '
+	.byte	$03,$c0,$00		; '      ####              '
+	.byte	$03,$e0,$00		; '      #####             '
+	.byte	$01,$a0,$00		; '       ## #             '
+	.byte	$03,$e0,$00		; '      #####             '
+	.byte	$07,$e0,$00		; '     ######             '
+	.byte	$07,$c0,$00		; '     #####              '
+	.byte	$07,$c0,$00		; '     #####              '
+	.byte	$03,$80,$00		; '      ###               '
+	.byte	$02,$00,$00		; '      #                 '
+	.byte	$06,$00,$00		; '     ##                 '
+
+_climb1:
+	.byte	$01,$80,$00		; '       ##               '
+	.byte	$03,$c0,$00		; '      ####              '
+	.byte	$03,$c0,$00		; '      ####              '
+	.byte	$3f,$fc,$00		; '  ############          '
+	.byte	$03,$c0,$00		; '      ####              '
+	.byte	$07,$c0,$00		; '     #####              '
+	.byte	$05,$80,$00		; '     # ##               '
+	.byte	$07,$c0,$00		; '     #####              '
+	.byte	$07,$e0,$00		; '     ######             '
+	.byte	$03,$e0,$00		; '      #####             '
+	.byte	$03,$e0,$00		; '      #####             '
+	.byte	$01,$c0,$00		; '       ###              '
+	.byte	$00,$40,$00		; '         #              '
+	.byte	$00,$60,$00		; '         ##             '

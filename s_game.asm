@@ -67,16 +67,26 @@ _loop:
 	ld		b,a
 	srl		b
 
-	ld		a,(_xforce+1)				; update manimation if moving or on ladder
-	and		a
+	ld		a,(_state)
+	bit		3,a
 	jr		z,{+}
+
+	ld		a,(_y+1)
+	rra
+	rra
+	jr		_setFrame
+
++:	ld		a,(_xforce+1)				; update manimation if moving or on ladder
+	and		a
+	jr		z,_setFrame
 
 	ld		a,(frames)					; animation frame tied to frames counter
 	rra
 	rra
 	rra
 
-+:	rl		b
+_setFrame:
+	rl		b
 	ld		a,b
 	ld		(_animState),a
 
@@ -114,9 +124,10 @@ _onGroundUpdate:
 	call	_checkLeftRight
 
 _checkDown:
-	ld		a,(INPUT._down)
-	and		1
-	jr		z,_checkUp
+	ld		a,(INPUT._down)				; only mount ladder when down is just pressed
+	and		3
+	cp		1
+	jr		nz,_checkUp
 
 	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		a,(iy)
@@ -129,9 +140,10 @@ _checkDown:
 	jp		z,_mountLadder
 
 _checkUp:
-	ld		a,(INPUT._up)
-	and		1
-	jr		z,_checkJump
+	ld		a,(INPUT._up)				; only mount ladder when up is just pressed
+	and		3
+	cp		1
+	jr		nz,_checkJump
 
 	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		a,(iy)
@@ -384,16 +396,32 @@ _noDismount:
 _mountLadder:
 	ld		a,%00001000					; on ladder
 	ld		(_state),a
+
+	ld		a,(_animState)
+	set		5,a
+	ld		(_animState),a
+
 	ld		a,(_x+1)
+
 	ld		bc,0
 	ld		(_x),bc
 	ld		(_xforce),bc
 	ld		(_yforce),bc
 
 	and		%11111000
-	or		4
+	ld		(_x+1),a
+	ld		e,a
+
+	ld		bc,(_mapAddrAtFootAfterMove)
+	ld		a,(bc)
+	cp		TILES._LADDER
+	ret		nz
+
+	ld		a,8
+	add		a,e
 	ld		(_x+1),a
 	ret
+
 
 _dismountLadder:
 	xor		a
@@ -402,20 +430,9 @@ _dismountLadder:
 	ld		(_xforce+1),a
 	ld		(_yforce),a
 	ld		(_yforce+1),a
-	ld		a,(_x+1)
-	or		7
-
-	bit		5,b							; left
-	jr		z,{+}
-
-	sub		8
-
-+:	bit		4,b							; right
-	jr		z,{+}
-
-	inc		a
-
-+:	ld		(_x+1),a
+	ld		a,(_animState)
+	res		5,a
+	ld		(_animState),a
 	ret
 
 
