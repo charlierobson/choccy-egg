@@ -23,25 +23,6 @@ _run:
 	ld		(_state),a
 
 _loop:
-	ld		b,0
-	ld		a,(INPUT._fire)
-	srl		a
-	rr		b
-	ld		a,(INPUT._right)
-	srl		a
-	rr		b
-	ld		a,(INPUT._left)
-	srl		a
-	rr		b
-	ld		a,(INPUT._down)
-	srl		a
-	rr		b
-	ld		a,(INPUT._up)
-	srl		a
-	rr		b
-	ld		a,b
-	ld		(_inputs),a
-
 	ld		hl,_state					; motion state, try and keep hl set to this for entire loop
 
 	ld		bc,(_x)						; keep previous position around for undrawing purposes
@@ -49,21 +30,40 @@ _loop:
 	ld		bc,(_y)
 	ld		(_prevy),bc
 
+	ld		a,(_x+1)
+	ld		c,a
+	ld		a,(_y+1)
+	ld		b,a
+	call	MAPS._getAddrOfTileFromPixel
+	ld		(_mapAddrAtFootBeforeMove),iy
+
+	ld		a,(_x+1)					; get position of tummy
+	ld		c,a
+	ld		a,(_y+1)
+	ld		b,a
+	ld		a,(_animState)
+	and		2							; test if facing right
+	ld		a,4							; tummy is 4 pixels right
+	jr		z,{+}
+	ld		a,-5						; tummy is 5 pixels left
++:	add		a,c
+	ld		c,a
+	call	MAPS._getAddrOfTileFromPixel
+	ld		(_mapAddrAtTummyBeforeMove),iy
+	ld		a,(iy)
+	ld		(_tileAtTummyBeforeMove),a
+
 	call	_updateMovement
 
 	ld		a,(_y+1)
 	cp		191
 	jr		c,{+}						; ok
-_aaa:
+
 	ld		a,191						; oh dear oh dead
 	call	_setY
 	jp		_gameOver
 
-+:	ld		a,(_state)
-	cp		$ff
-	jp		z,_gameOver
-
-	ld		a,(_animState)
++:	ld		a,(_animState)
 	ld		b,a
 	srl		b
 
@@ -88,56 +88,6 @@ _aaa:
 	call	DRAW._MAN					; draw man at new position
 
 	jp		_loop
-
-
-_updateMovementX:
-	ld		a,(INPUT._up)
-	and		3
-	cp		1
-	jr		nz,{+}
-
-	ld		a,(_y+1)
-	dec		a
-	ld		(_y+1),a
-	ret
-
-+:	ld		a,(INPUT._down)
-	and		3
-	cp		1
-	jr		nz,{+}
-
-	ld		a,(_y+1)
-	inc		a
-	ld		(_y+1),a
-	ret
-
-+:	ld		a,(INPUT._left)
-	and		3
-	cp		1
-	jr		nz,{+}
-
-	ld		a,(_x+1)
-	dec		a
-	ld		(_x+1),a
-	ret
-
-+:	ld		a,(INPUT._right)
-	and		3
-	cp		1
-	jr		nz,{+}
-
-	ld		a,(_x+1)
-	inc		a
-	ld		(_x+1),a
-	ret
-
-+:	ld		a,(INPUT._fire)
-	and		3
-	cp		1
-	ret		nz
-
-	ld		hl,MAPS._level1
-	jp		DRAW._MAP
 
 
 
@@ -234,6 +184,10 @@ _checkLeftRight:
 	ld		a,2							; face left
 	ld		(_animState),a
 
+	ld		a,(_tileAtTummyBeforeMove)
+	bit		6,a
+	jr		nz,{+}
+
 	ld		bc,$ff00		; replace with call to addForceClampedTo1?
 	ld		(_xforce),bc
 
@@ -243,6 +197,11 @@ _checkLeftRight:
 
 	ld		a,0							; face right
 	ld		(_animState),a
+
+	ld		a,(_tileAtTummyBeforeMove)
+	bit		6,a
+	ret		nz
+
 	ld		bc,$0100		; replace with call to addForceClampedTo1
 	ld		(_xforce),bc
 	ret
@@ -303,8 +262,8 @@ _inAirUpdate:
 	cp		TILES._LADDER
 	jr		nz,_noLadderLanding
 
-	ld		a,(_inputs)					; can land if up or down pressed
-	and		%11000000
+	ld		a,(INPUT._impulse)			; can land if up or down pressed
+	and		%00011000					; ---UDlrf
 	jr		z,_noLadderLanding
 
 	call	_mountLadder
@@ -386,9 +345,9 @@ _onLadderUpdate:
 
 	call	_cancelUpdatePosition
 
-+:	ld		a,(_inputs)
++:	ld		a,(INPUT._impulse)
 	ld		b,a
-	and		%00110000
+	and		%00000110					; ---udLRf
 	jr		z,_noDismount
 
 	ld		a,(_y+1)
@@ -405,6 +364,7 @@ _onLadderUpdate:
 
 +:	bit		3,b							; jumping off?
 	jr		z,_noDismount
+
 	cp		TILES._LADDERL
 	ld		a,(iy-32)
 	cp		TILES._LADDERL
@@ -474,7 +434,11 @@ _updatePosition:
 	ld		(_y),iy
 
 _updateMapAddrAtFoot:
-	call	MAPS._getAddrAtFoot
+	ld		a,(_x+1)
+	ld		c,a
+	ld		a,(_y+1)
+	ld		b,a
+	call	MAPS._getAddrOfTileFromPixel
 	ld		(_mapAddrAtFootAfterMove),iy
 	ret
 
@@ -502,7 +466,6 @@ _gameOver:
 	call	DISPLAY._SETUPLORES
 
 	ret
-
 
 
 _setX:
@@ -536,11 +499,12 @@ _yforce:
 
 _mapAddrAtFootBeforeMove:
 	.word	 0
+_mapAddrAtTummyBeforeMove:
+	.word	 0
+_tileAtTummyBeforeMove:
+	.byte	 0
 _mapAddrAtFootAfterMove:
 	.word	 0
-
-_inputs:
-	.byte	0
 
 ; bit 7 - moving left
 ; bit 6 - moving right
@@ -557,83 +521,6 @@ _animState:
 	.byte	0
 
 
-_debugOutput:
-	push	iy
-	push	hl
-
-	ld		iy,(_mapAddrAtFootAfterMove)
-	ld		a,(iy+1)
-	push	af
-	ld		a,(iy-1)
-	push	af
-	ld		a,(iy+32)
-	push	af
-	ld		a,(iy)
-	push	af
-	ld		a,(iy-32)
-	push	af
-
-	ld		iy,DISPLAY._dfilehr+(2*32+1)
-	ld		a,$ff
-	ld		(iy),a
-
-	ld		iy,DISPLAY._dfilehr+(4*32+1)
-	pop		af
-	call	DRAW._TILE
-
-	ld		iy,DISPLAY._dfilehr+(12*32+1)
-	pop		af
-	call	DRAW._TILE
-
-	ld		iy,DISPLAY._dfilehr+(20*32+1)
-	pop		af
-	call	DRAW._TILE
-
-	ld		iy,DISPLAY._dfilehr+(12*32)
-	pop		af
-	call	DRAW._TILE
-
-	ld		iy,DISPLAY._dfilehr+(12*32+2)
-	pop		af
-	call	DRAW._TILE
-
-	ld		iy,DISPLAY._dfilehr+(29*32+1)
-	ld		a,$ff
-	ld		(iy),a
-
-	ld		iy,DISPLAY._dfilehr+2
-	ld		(pr_cc),iy
-	ld		a,(_x+1)
-	and		7
-	call	DRAW._HEX
-	ld		a,(_y+1)
-	and		7
-	call	DRAW._HEX
-
-	ld		iy,DISPLAY._dfilehr+6
-	ld		(pr_cc),iy
-	ld		a,(DRAW._chx)
-	call	DRAW._HEX
-	ld		a,(DRAW._chy)
-	call	DRAW._HEX
-
-;	ld		iy,DISPLAY._dfilehr+2+320
-;	ld		(pr_cc),iy
-;	ld		a,(_xforce+1)
-;	call	DRAW._HEX
-;	ld		a,(_xforce)
-;	call	DRAW._HEX
-;
-;	ld		iy,DISPLAY._dfilehr+7+320
-;	ld		(pr_cc),iy
-;	ld		a,(_yforce+1)
-;	call	DRAW._HEX
-;	ld		a,(_yforce)
-;	call	DRAW._HEX
-
-	pop		hl
-	pop		iy
-	ret
-
+#include "s_game.debug.asm"
 
 .endmodule

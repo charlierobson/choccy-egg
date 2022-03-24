@@ -26,7 +26,9 @@ _read:
 
 _inputptr=$+1
 	ld		hl,_titleinput			; !! self modified
-	nop								; timing
+
+	ld		ix,_impulse
+	ld		(ix),0
 
 	in		a,(c)
 	ld		d,a
@@ -58,6 +60,9 @@ _update:
 	or		e						; integrate js results, only care about bit 0
 	rra								; completed result back into carry
 	inc		hl						; ->key state
+	push	af
+	rl		(ix)
+	pop		af
 	rl		(hl)					; shift carry into input bit train, job done
 	inc		hl						; -> next input in table
 	ret
@@ -152,6 +157,8 @@ _gameinput:
 	.byte	%00010000,$DF,%00000001,0		; right	(P)
 	.byte	%00001000,$7F,%00000001,0		; fire	(SP)
 
+_impulse:
+	.byte	0
 
 ; calculate actual input impulse addresses
 ;
