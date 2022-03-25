@@ -90,7 +90,7 @@ _setFrame:
 	ld		a,b
 	ld		(_animState),a
 
-	call	_debugOutput
+;	call	_debugOutput
 
 	call	DISPLAY._FRAMESYNC
 

@@ -5,10 +5,10 @@ Let's see what we can do with this, eh?
 
 Macro Todo:
 
-* Birds
-* Levels
 * Collecting
 * Score
+* Birds
+* Levels
 * Hiscore
 * Timer?
 * Sound
@@ -19,4 +19,5 @@ Macro Todo:
 * Game transitions
 
 Micro Todo:
-* reduce sprite size/draw time by eliminating all-zero columns
+* compression
+* ? reduce sprite size/draw time by eliminating all-zero columns

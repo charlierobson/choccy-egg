@@ -140,6 +140,7 @@ _CLS:
 
 _dfile:
 	; empty d-file. You can put a sketchy screen here to be shown at load time.
+	; also useful as map buffer
 	.repeat 24
 	  .byte $76
 	  .fill 32,0
