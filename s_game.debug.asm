@@ -121,6 +121,5 @@ _updateMovementX:
 	cp		1
 	ret		nz
 
-	ld		hl,MAPS._level1
 	jp		DRAW._MAP
 

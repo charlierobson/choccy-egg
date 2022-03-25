@@ -76,6 +76,7 @@ _tileDraw:
 
 
 _MAP:
+	ld		hl,(GAME._level)
 	ld		iy,DISPLAY._dfilehr
 	ld		c,24
 
@@ -213,7 +214,7 @@ _NOMAN:
 	rr		c
 	srl		b
 	rr		c
-	ld		hl,MAPS._level1
+	ld		hl,(GAME._level)
 	add		hl,bc
 	ex		de,hl						; de -> tile under top left of man's position
 

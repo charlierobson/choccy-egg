@@ -4,7 +4,13 @@
 ; which turns character codes into byte offsets into character set
 ;
 _level1:
-	.incbin	"data\chegt.off"
+	.incbin	"data\cheg1.lz"
+_level2:
+	.incbin	"data\cheg2.lz"
+_level3:
+	.incbin	"data\cheg3.lz"
+_levelT:
+	.incbin	"data\chegt.lz"
 
 _title:
 	.incbin "data\title.binlz"
@@ -21,6 +27,6 @@ _getAddrOfTileFromPixel:
 	rr		c
 	srl		b
 	rr		c
-	ld		iy,MAPS._level1
+	ld		iy,(GAME._level)
 	add		iy,bc
 	ret

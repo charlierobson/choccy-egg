@@ -10,6 +10,10 @@ _run:
 	call	DISPLAY._SETUPHIRES
 
 	ld		hl,MAPS._level1
+	ld		de,DISPLAY._dfile
+	ld		(_level),de
+	call	LZ48._DECRUNCH
+
 	call	DRAW._MAP
 
 	ld		bc,$6800
@@ -535,6 +539,9 @@ _prevy:
 _xforce:
 	.word	0
 _yforce:
+	.word	0
+
+_level:
 	.word	0
 
 _mapAddrAtFootBeforeMove:
