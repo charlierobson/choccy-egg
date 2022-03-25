@@ -9,11 +9,22 @@ _run:
 	call	DISPLAY._CLSHR
 	call	DISPLAY._SETUPHIRES
 
-	ld		hl,MAPS._level1
+	xor		a
+	ld		(_levelNum),a
+
+_newLevel:
+	ld		a,(_levelNum)
+	ld		hl,MAPS._levels
+	call	tableget
 	ld		de,DISPLAY._dfile
 	ld		(_level),de
 	call	LZ48._DECRUNCH
 
+	xor		a
+	ld		(_state),a
+	ld		(_eggs),a
+
+_restartLevel:
 	call	DRAW._MAP
 
 	ld		bc,$6800
@@ -22,9 +33,6 @@ _run:
 	ld		bc,$3700
 	ld		(_y),bc
 	ld		(_prevy),bc
-
-	xor		a
-	ld		(_state),a
 
 _loop:
 	ld		hl,_state					; motion state, try and keep hl set to this for entire loop
@@ -71,7 +79,9 @@ _loop:
 
 	ld		a,191						; oh dear oh dead
 	call	_setY
-	jp		_gameOver
+
+	call	_pause
+	jr		_restartLevel
 
 +:	ld		a,(_animState)
 	ld		b,a
@@ -107,11 +117,24 @@ _setFrame:
 	call	DRAW._NOMAN					; undraw man at old position
 	call	DRAW._MAN					; draw man at new position
 
-	jp		_loop
+	ld		a,(_eggs)
+	cp		12
+	jp		nz,_loop
+
+	ld		a,(_levelNum)
+	inc		a
+	ld		(_levelNum),a
+	cp		3
+	jp		nz,_newLevel
+
+	jp		_gameOver
 
 
 _collectEgg:
 	ld		(iy),0
+	ld		a,(_eggs)
+	inc		a
+	ld		(_eggs),a
 	ld		a,2
 	push	hl
 	call	AYFXPLAYER._PLAY
@@ -515,20 +538,22 @@ _cancelUpdatePosition:
 
 
 _gameOver:
+	ld		a,2
+	call	AYFXPLAYER._PLAY
+	call	_pause
+	call	DISPLAY._CLS
+	call	DISPLAY._SETUPLORES
+	ret
+
+
+_pause:
 	call	DISPLAY._FRAMESYNC
 	call	DRAW._NOMAN					; undraw man at old position
 	call	DRAW._MAN					; draw man at new position
 
-	ld		a,2
-	call	AYFXPLAYER._PLAY
-
 	ld		b,75
 -:	call	DISPLAY._FRAMESYNC
 	djnz	{-}
-
-	call	DISPLAY._CLS
-	call	DISPLAY._SETUPLORES
-
 	ret
 
 
@@ -563,6 +588,12 @@ _yforce:
 
 _level:
 	.word	0
+
+_levelNum:
+	.byte	0
+
+_eggs:
+	.byte	0
 
 _mapAddrAtFootBeforeMove:
 	.word	 0

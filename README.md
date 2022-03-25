@@ -5,7 +5,7 @@ Let's see what we can do with this, eh?
 
 Macro Todo:
 
-* Collecting
+* ~Collecting~
 * Score
 * Birds
 * Levels
@@ -19,5 +19,5 @@ Macro Todo:
 * Game transitions
 
 Micro Todo:
-* compression
+* ~compression~
 * ? reduce sprite size/draw time by eliminating all-zero columns

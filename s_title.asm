@@ -22,8 +22,7 @@ _loop:
 	ld		a,(frames)	; AB------
 	rlca				; -------A
 	rlca				; ------AB
-	rlca				; -----AB-
-	and		6			; 00000AB0  :- 0,2,4,6
+	and		3			; 000000AB  :- 0,1,2,3
 
 	ld		hl,_titletextlist
 	call	tableget

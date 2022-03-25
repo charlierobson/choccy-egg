@@ -121,7 +121,9 @@ _CLSHR:
 
 
 _CLS:
-	ld		hl,_dfile+1
+	ld		hl,_dfile
+	ld		(hl),$76
+	inc		hl
 	ld		c,24
 	xor		a
 
@@ -131,6 +133,7 @@ _CLS:
 	inc		hl
 	djnz	{-}
 
+	ld		(hl),$76
 	inc		hl
 	dec		c
 	jr		nz,{--}

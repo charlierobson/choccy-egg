@@ -21,6 +21,7 @@ adda2de:
 ; Gets a word from a table at offset in a, table base in hl
 ;
 tableget:
+	add		a,a
 	call	adda2hl
 	ld		a,(hl)
 	inc		hl
