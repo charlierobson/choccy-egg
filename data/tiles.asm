@@ -1,8 +1,8 @@
 	.module TILES
 
 _AIR = $00
-_EGG = $20
-_SEED = $28
+_EGG = $08
+_SEED = $10
 
 _GROUND = $40
 _LADDERL = $70

@@ -41,6 +41,12 @@ _loop:
 	call	MAPS._getAddrOfTileFromPixel
 	ld		(_mapAddrAtFootBeforeMove),iy
 
+	ld		a,(iy)
+	cp		TILES._EGG
+	call	z,_collectEgg
+	cp		TILES._SEED
+	call	z,_collectSeed
+
 	ld		a,(_x+1)					; get position of tummy
 	ld		c,a
 	ld		a,(_y+1)
@@ -75,12 +81,12 @@ _loop:
 	bit		BONLADDER,a
 	jr		z,{+}
 
-	ld		a,(_y+1)
+	ld		a,(_y+1)					; ladder anim update
 	rra
 	rra
 	jr		_setFrame
 
-+:	ld		a,(_xforce+1)				; update manimation if moving or on ladder
++:	ld		a,(_xforce+1)				; update manimation if moving
 	and		a
 	jr		z,_setFrame
 
@@ -104,7 +110,21 @@ _setFrame:
 	jp		_loop
 
 
+_collectEgg:
+	ld		(iy),0
+	ld		a,2
+	push	hl
+	call	AYFXPLAYER._PLAY
+	pop		hl
+	ret
 
+_collectSeed:
+	ld		(iy),0
+	ld		a,5
+	push	hl
+	call	AYFXPLAYER._PLAY
+	pop		hl
+	ret
 
 _updateMovement:
 	bit		BINAIR,(hl)
