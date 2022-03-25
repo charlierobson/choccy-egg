@@ -68,7 +68,7 @@ _loop:
 	srl		b
 
 	ld		a,(_state)
-	bit		3,a
+	bit		BONLADDER,a
 	jr		z,{+}
 
 	ld		a,(_y+1)
@@ -103,10 +103,10 @@ _setFrame:
 
 
 _updateMovement:
-	bit		5,(hl)
+	bit		BINAIR,(hl)
 	jp		nz,_inAirUpdate
 
-	bit		3,(hl)
+	bit		BONLADDER,(hl)
 	jp		nz,_onLadderUpdate
 
 _onGroundUpdate:
@@ -221,8 +221,7 @@ _checkLeftRight:
 
 
 _jump:
-	ld		a,%00100000
-	ld		(_state),a
+	set		BINAIR,(hl)
 	ld		bc,$fe80
 	ld		(_yforce),bc
 	ret
@@ -268,10 +267,13 @@ _inAirUpdate:
 	ld		b,a
 	and		$30
 	cp		TILES._LADDER
-	jr		nz,_noLadderLanding
+	jr		nz,_clearLadderEx
 	ld		a,(iy-32)
 	and		$30
 	cp		TILES._LADDER
+	jr		nz,_noLadderLanding
+
+	bit		BLADDEREX,(hl)				; can land on ladder if not exiting it
 	jr		nz,_noLadderLanding
 
 	ld		a,(INPUT._impulse)			; can land if up or down pressed
@@ -281,6 +283,9 @@ _inAirUpdate:
 	call	_mountLadder
 	call	_updateMapAddrAtFoot
 	ret
+
+_clearLadderEx:
+	res		BLADDEREX,(hl)
 
 _noLadderLanding:
 	ld		a,(_yforce+1)				; only check for floor when falling
@@ -303,7 +308,7 @@ _startFall:
 
 	ld		bc,$0100
 	ld		(_yforce),bc
-	ld		(hl),%00110000				; state = in air/falling
+	ld		(hl),NINAIR
 	ret
 
 
@@ -323,82 +328,99 @@ _stopFall:
 	ld		(_y),bc
 	ld		bc,$0000
 	ld		(_yforce),bc
-	ld		(hl),%00000000				; state = on ground
+	ld		(hl),0						; state = on ground
 	ret
 
 
 
 _onLadderUpdate:
 	ld		bc,$0000
+	ld		iy,(_mapAddrAtFootBeforeMove)
 
 	ld		a,(INPUT._up)
 	and		1
-	jr		z,{+}
+	jr		z,_notUp
 
-	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		a,(iy-32)
 	cp		TILES._AIR
-	jr		z,{+}
+	jr		z,_notUp
 
 	ld		bc,$ff00
 
-+:	ld		a,(INPUT._down)
+_notUp:
+	ld		a,(INPUT._down)
 	and		1
-	jr		z,{+}
+	jr		z,_notDown
 
-	ld		bc,$0100
+	ld		e,(iy)						; tile at foot
 
-+:	ld		(_yforce),bc
-	call	_updatePosition
-
-	ld		a,(iy)
-	cp		TILES._GROUND
-	jr		nz,{+}
-
-	call	_cancelUpdatePosition
-
-+:	ld		a,(INPUT._impulse)
-	ld		b,a
-	and		%00000110					; ---udLRf
-	jr		z,_noDismount
-
-	ld		a,(_y+1)
+	ld		a,(_y+1)					; if we're about to move into tile below ...
 	and		7
 	cp		7
 	jr		nz,{+}
 
-	ld		a,(iy+32)
+	ld		e,(iy+32)					; ... check further down
+
++:	xor		a							; is it air?
+	cp		e
+	jr		nz,{+}
+
+	jp		_dismountLadder				; weeeee!
+
++:	ld		a,$40
+	cp		e							; ground underfoot?
+	jr		z,_notDown
+
+	ld		bc,$0100
+
+_notDown:
+	ld		(_yforce),bc
+	call	_updatePosition
+
+	ld		a,(INPUT._impulse)
+	ld		b,a
+	and		%00000110					; ---udLRf
+	ret		z							; no exiting of ladder at this point
+
+	bit		0,b							; ---udlrF  jumping off?
+	jr		nz,_jumpOffCheck
+
+	ld		a,(_y+1)					; at ground level?
+	and		7
+	cp		7
+	ret		nz
+
+	ld		a,(iy+32)					; is solid beneath feet?
 	and		$40
-	jr		z,{+}
+	ret		z
 
 	call	_dismountLadder
 	jp		_updatePosition
 
-+:	bit		3,b							; jumping off?
-	jr		z,_noDismount
-
-	cp		TILES._LADDERL
+_jumpOffCheck:
 	ld		a,(iy-32)
-	cp		TILES._LADDERL
-	ret		nz
-	ld		a,(iy)
-	cp		TILES._LADDERL
+	and		a							; at top of ladder?
+	jr		z,{+}
+
+	and		$f0
+	cp		TILES._LADDER
 	ret		nz
 
-	call	_dismountLadder
+	ld		a,(iy)
+	and		$f0
+	cp		TILES._LADDER
+	ret		nz
+
++:	call	_dismountLadder
 	call	_jump
 	call	_checkLeftRight
-
-_noDismount:
-	ret
-
+	jp		_updatePosition
 
 _mountLadder:
-	ld		a,%00001000					; on ladder
-	ld		(_state),a
+	ld		(hl),NONLADDER
 
 	ld		a,(_animState)
-	set		5,a
+	set		5,a							; climbing frames
 	ld		(_animState),a
 
 	ld		a,(_x+1)
@@ -424,15 +446,13 @@ _mountLadder:
 
 
 _dismountLadder:
-	xor		a
-	ld		(_state),a
-	ld		(_xforce),a
-	ld		(_xforce+1),a
-	ld		(_yforce),a
-	ld		(_yforce+1),a
+	ld		bc,0
+	ld		(_xforce),bc
+	ld		(_yforce),bc
 	ld		a,(_animState)
-	res		5,a
+	res		5,a							; walk again
 	ld		(_animState),a
+	ld		(hl),NLADDEREX				; clear state flags, default on ground, exiting ladder
 	ret
 
 
@@ -523,12 +543,17 @@ _tileAtTummyBeforeMove:
 _mapAddrAtFootAfterMove:
 	.word	 0
 
-; bit 7 - moving left
-; bit 6 - moving right
-; bit 5 - in the air
-; bit 4 - falling
-; bit 3 - climbing
-; -1: dead
+
+; bit positions for various states
+BINAIR=7
+NINAIR=1<<BINAIR
+
+BONLADDER=6
+NONLADDER=1<<BONLADDER
+
+BLADDEREX=5
+NLADDEREX=1<<BLADDEREX
+
 _state:
 	.byte	0
 
