@@ -243,12 +243,7 @@ _inAirUpdate:
 
 	ld		a,6
 	ld		(_x+1),a
-	ld		a,(_xforce)
-	neg
-	ld		(_xforce),a
-	ld		a,(_xforce+1)
-	neg
-	ld		(_xforce+1),a
+	call	_rebound
 
 +:	ld		a,(_x+1)
 	cp		250
@@ -256,14 +251,13 @@ _inAirUpdate:
 
 	ld		a,250
 	ld		(_x+1),a
-	ld		a,(_xforce)
-	neg
-	ld		(_xforce),a
-	ld		a,(_xforce+1)
-	neg
-	ld		(_xforce+1),a
+	call	_rebound
 
-+:	ld		a,(iy)						; can land on a ladder iff there is ladder at foot and head
++:	ld		a,(_tileAtTummyBeforeMove)
+	bit		6,a
+	call	nz,_rebound
+
+	ld		a,(iy)						; can land on a ladder iff there is ladder at foot and head
 	ld		b,a
 	and		$30
 	cp		TILES._LADDER
@@ -282,6 +276,15 @@ _inAirUpdate:
 
 	call	_mountLadder
 	call	_updateMapAddrAtFoot
+	ret
+
+_rebound:
+	ld		a,(_xforce)
+	neg
+	ld		(_xforce),a
+	ld		a,(_xforce+1)
+	neg
+	ld		(_xforce+1),a
 	ret
 
 _clearLadderEx:
