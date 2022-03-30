@@ -87,7 +87,7 @@ _line1:
 
 	.include maps.asm
 	.include "data\tiles.asm"
-	.include "data\charlie.asm"
+	.include "data\sprites.asm"
 
 
 ;-------------------------------------------------------------------------------

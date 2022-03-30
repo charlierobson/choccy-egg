@@ -138,7 +138,7 @@ _MAN:
 	and		7							; bottom 3 bits of x coord contains the number of shifts
 	ld		b,a
 	ld		a,(GAME._animState)			; bottom 2 bits are 'left facing' and 'frame2' 
-	call	CHARLIE._getFrame			; in: b-> x & 7, a-> sprite frame number
+	call	SPRITES._getFrame			; in: b-> x & 7, a-> sprite frame number
 
 	ld		b,14
 

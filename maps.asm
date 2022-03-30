@@ -10,6 +10,7 @@ _levelT:
 	.incbin	"data\chegt.lz"
 
 _levels:
+;	.word	_levelT
 	.word	_level1,_level2,_level3
 
 _title:

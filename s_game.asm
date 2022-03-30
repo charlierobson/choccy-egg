@@ -277,7 +277,7 @@ _jump:
 _inAirUpdate:
 	push	hl
 	ld		hl,(_yforce)				; 'gravity'
-	ld		bc,$0020
+	ld		bc,$001b
 	add		hl,bc
 	ld		(_yforce),hl
 	pop		hl

@@ -6,11 +6,13 @@ Let's see what we can do with this, eh?
 Macro Todo:
 
 * ~Collecting~
+* Moving platforms
 * Score
 * Birds
+* Duck
 * Levels
 * Hiscore
-* Timer?
+* Timer
 * Sound
 * Title
 * Help
