@@ -37,7 +37,21 @@ _restartLevel:
 _loop:
 	ld		hl,_state					; motion state, try and keep hl set to this for entire loop
 
-	ld		bc,(_x)						; keep previous position around for undrawing purposes
+	ld		a,(INPUT._up)				; udenable: set to 1 when either up or down freshly pressed
+	and		3							; this can be used as a mask to enable mounting of ladder
+	cp		1							; to prevent re-attachment after leaving it
+	jr		nz,{+}
+
+	ld		(_udEnable),a
+
++:	ld		a,(INPUT._down)
+	and		3
+	cp		1
+	jr		nz,{+}
+
+	ld		(_udEnable),a
+
++:	ld		bc,(_x)						; keep previous position around for undrawing purposes
 	ld		(_prevx),bc
 	ld		bc,(_y)
 	ld		(_prevy),bc
@@ -81,7 +95,7 @@ _loop:
 	call	_setY
 
 	call	_pause
-	jr		_restartLevel
+	jp		_restartLevel
 
 +:	ld		a,(_animState)
 	ld		b,a
@@ -116,6 +130,15 @@ _setFrame:
 
 	call	DRAW._NOMAN					; undraw man at old position
 	call	DRAW._MAN					; draw man at new position
+
+	; ld		bc,$0000
+	; call	DRAW._HEN
+	; ld		bc,$0010
+	; call	DRAW._HEN
+	; ld		bc,$0020
+	; call	DRAW._HEN
+	; ld		bc,$0030
+	; call	DRAW._HEN
 
 	ld		a,(_eggs)
 	cp		12
@@ -172,9 +195,12 @@ _onGroundUpdate:
 
 _checkDown:
 	ld		a,(INPUT._down)				; only mount ladder when down is just pressed
-	and		3
-	cp		1
-	jr		nz,_checkUp
+	and		1
+	jr		z,_checkUp
+
+	ld		a,(_udEnable)
+	and		a
+	jr		z,_checkUp
 
 	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		a,(iy)
@@ -187,10 +213,13 @@ _checkDown:
 	jp		z,_mountLadder
 
 _checkUp:
-	ld		a,(INPUT._up)				; only mount ladder when up is just pressed
-	and		3
-	cp		1
-	jr		nz,_checkJump
+	ld		a,(INPUT._up)				; only mount ladder when
+	and		1
+	jr		z,_checkJump
+
+	ld		a,(_udEnable)
+	and		a
+	jr		z,_checkJump
 
 	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		a,(iy)
@@ -496,7 +525,10 @@ _mountLadder:
 
 
 _dismountLadder:
-	ld		bc,0
+	xor		a
+	ld		b,a
+	ld		c,a
+	ld		(_udEnable),a
 	ld		(_xforce),bc
 	ld		(_yforce),bc
 	ld		a,(_animState)
@@ -621,6 +653,9 @@ _state:
 ; bit 1 - facing left
 ; bit 0 - walking
 _animState:
+	.byte	0
+
+_udEnable:
 	.byte	0
 
 

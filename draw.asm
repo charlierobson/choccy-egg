@@ -290,6 +290,47 @@ _NOMAN:
 
 
 
+_HEN:
+	; dr beep's optimised screen address calculation.
+	; we'll see this a lot.
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	ld		hl,DISPLAY._dfilehr
+	add		hl,bc
+	ex		de,hl						; de -> byte address containing topleft pixel
+
+	ld		hl,SPRITES._hen0l
+	ld		a,(frames)
+	bit		5,a
+	jr		nz,{+}
+	ld		hl,SPRITES._hen1l
++:
+
+	ld		b,14
+
+-:	ld		a,(hl)						; jam our pixels into it
+	ld		(de),a
+	inc		hl
+	inc		de
+	ld		a,(hl)
+	ld		(de),a
+	inc		hl
+	inc		de
+	ld		a,(hl)
+	ld		(de),a
+	inc		hl
+
+	ld		a,30						; each screen line is 32 bytes, we've already added 2
+	call	adda2de
+
+	djnz	{-}
+	ret
+
+
 _HEX:
 	push	af
 	srl		a
