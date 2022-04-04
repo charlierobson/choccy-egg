@@ -5,7 +5,9 @@ cd data
 call :convert cheg1
 call :convert cheg2
 call :convert cheg3
-call :convert chegt
+call :convert cheg4
+call :convert cheg5
+call :convert cheg6
 cd ..
 set dest=C:\Users\robsonc\EightyOne\ZXpand_SD_Card\
 

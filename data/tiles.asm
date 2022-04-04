@@ -4,6 +4,9 @@ _AIR = $00
 _EGG = $08
 _SEED = $10
 
+_MAN = $18
+_ELE = $20
+
 _GROUND = $40
 _LADDERL = $70
 _LADDERR = $78
@@ -40,23 +43,23 @@ _START:
 	.byte	$2a		; '  # # # '
 	.byte	$55		; ' # # # #'
 
-	.byte	$ff		; '########'
-	.byte	$81		; '#      #'
-	.byte	$81		; '#      #'
-	.byte	$81		; '#      #'
-	.byte	$81		; '#      #'
-	.byte	$81		; '#      #'
-	.byte	$81		; '#      #'
-	.byte	$ff		; '########'
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
 
-	.byte	$81		; '#      #'
-	.byte	$42		; ' #    # '
-	.byte	$24		; '  #  #  '
-	.byte	$18		; '   ##   '
-	.byte	$18		; '   ##   '
-	.byte	$24		; '  #  #  '
-	.byte	$42		; ' #    # '
-	.byte	$81		; '#      #'
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
+	.byte	$00		; '        '
 
 	.byte	$00		; '        '
 	.byte	$00		; '        '

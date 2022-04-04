@@ -6,7 +6,7 @@ Let's see what we can do with this, eh?
 Macro Todo:
 
 * ~Collecting~
-* Moving platforms
+* ~Moving platforms~
 * Score
 * Birds
 * Duck

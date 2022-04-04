@@ -9,8 +9,7 @@ _run:
 	call	DISPLAY._CLSHR
 	call	DISPLAY._SETUPHIRES
 
-;	xor		a
-	ld		a,2
+	xor		a
 	ld		(_levelNum),a
 
 _newLevel:
@@ -21,11 +20,6 @@ _newLevel:
 	ld		(_level),de
 	call	LZ48._DECRUNCH
 
-	ld		a,(_levelNum)
-	ld		hl,MAPS._elevators
-	call	tablegetb
-	ld		(_elevatorX),a
-
 	xor		a
 	ld		(_state),a
 	ld		(_eggs),a
@@ -33,12 +27,11 @@ _newLevel:
 _restartLevel:
 	call	DRAW._MAP
 
-	ld		bc,$6800
-	ld		(_x),bc
-	ld		(_prevx),bc
-	ld		bc,$3700
-	ld		(_y),bc
-	ld		(_prevy),bc
+	call	MAPS._findStartPositions
+	ld		hl,(_x)
+	ld		(_prevx),hl
+	ld		hl,(_y)
+	ld		(_prevy),hl
 
 _loop:
 	ld		hl,_state					; motion state, try and keep hl set to this for entire loop
@@ -190,7 +183,7 @@ _ea:
 	ld		a,(_levelNum)
 	inc		a
 	ld		(_levelNum),a
-	cp		3
+	cp		6
 	jp		nz,_newLevel
 
 	jp		_gameOver
@@ -427,7 +420,7 @@ _noLadderLanding:
 	ret
 
 _tryLandOnElevator:
-	ld		a,(_x+1)
+	ld		a,(_x+1)					; x is within elevator x->x+16?
 	ld		b,a
 	ld		a,(_elevatorX)
 	cp		b
@@ -646,11 +639,34 @@ _dismountLadder:
 
 _onElevatorUpdate:
 	ld		bc,0
-	ld		(_yforce),bc
 	ld		(_xforce),bc
+	call	_checkLeftRight
+	call	_updatePosition
+	ld		a,(INPUT._fire)
+	and		1
+	jr		z,{+}
+
+	ld		(hl),0
+	jp		_jump
+
++:	ld		a,(_x+1)
+	ld		b,a
+	ld		a,(_elevatorX)
+	cp		b
+	jr		nc,_fallOffElevator
+	add		a,16
+	cp		b
+	jr		c,_fallOffElevator
+
 	ld		de,(_attachedElevator)
 	ld		a,(de)
+	dec		a
 	ld		(_y+1),a
+	cp		16							; can't go off top of screen
+	ret		nz
+
+_fallOffElevator:
+	ld		(hl),0						; abort!
 	ret
 
 
