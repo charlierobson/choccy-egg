@@ -479,12 +479,9 @@ _isABetweenBAndC:
 
 
 _startFall:
-	ld		bc,(_xforce)				; halve the x force
-	sra		b
-	rr		c
+	ld		bc,0
 	ld		(_xforce),bc
-
-	ld		bc,$0100
+	ld		b,$01
 	ld		(_yforce),bc
 	ld		(hl),NINAIR
 	ret
