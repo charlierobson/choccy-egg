@@ -9,7 +9,8 @@ _run:
 	call	DISPLAY._CLSHR
 	call	DISPLAY._SETUPHIRES
 
-	xor		a
+;	xor		a
+	ld		a,2
 	ld		(_levelNum),a
 
 _newLevel:
@@ -19,6 +20,11 @@ _newLevel:
 	ld		de,DISPLAY._dfile
 	ld		(_level),de
 	call	LZ48._DECRUNCH
+
+	ld		a,(_levelNum)
+	ld		hl,MAPS._elevators
+	call	tablegetb
+	ld		(_elevatorX),a
 
 	xor		a
 	ld		(_state),a
@@ -131,6 +137,43 @@ _setFrame:
 	call	DRAW._NOMAN					; undraw man at old position
 	call	DRAW._MAN					; draw man at new position
 
+	ld		a,(_elevatorX)
+	and		a
+	jr		z,{+}
+
+	ld		c,a
+	ld		a,(_elevator1Y+1)
+	ld		b,a
+	call	DRAW._ELEVATOR
+
+	ld		a,(_elevatorX)
+	ld		c,a
+	ld		a,(_elevator2Y+1)
+	ld		b,a
+	call	DRAW._ELEVATOR
+
+	ld		a,(_elevatorX)
+	ld		c,a
+	ld		b,0
+	call	DRAW._NOELEVATOR
++:
+
+_ea:
+	ld		bc,$ff80
+	ld		a,186
+	ld		hl,(_elevator1Y)
+	add		hl,bc
+	cp		h
+	jr		nc,{+}
+	ld		h,a
++:	ld		(_elevator1Y),hl
+	ld		hl,(_elevator2Y)
+	add		hl,bc
+	cp		h
+	jr		nc,{+}
+	ld		h,a
++:	ld		(_elevator2Y),hl
+
 	; ld		bc,$0000
 	; call	DRAW._HEN
 	; ld		bc,$0010
@@ -172,12 +215,17 @@ _collectSeed:
 	pop		hl
 	ret
 
+
+
 _updateMovement:
 	bit		BINAIR,(hl)
 	jp		nz,_inAirUpdate
 
 	bit		BONLADDER,(hl)
 	jp		nz,_onLadderUpdate
+
+	bit		BONELEVATOR,(hl)
+	jp		nz,_onElevatorUpdate
 
 _onGroundUpdate:
 	ld		bc,(_xforce)				; halve the x force each time
@@ -372,11 +420,69 @@ _noLadderLanding:
 	ret		nz
 
 	bit		6,b							; solidity check
-	ret		z
+	jr		z,_tryLandOnElevator
 
 	call	_stopFall
 	call	_updateMapAddrAtFoot
 	ret
+
+_tryLandOnElevator:
+	ld		a,(_x+1)
+	ld		b,a
+	ld		a,(_elevatorX)
+	cp		b
+	ret		nc
+	add		a,16
+	cp		b
+	ret		c
+
+	; is within elevatorX, test Ys
+
+	push	hl
+	ld		hl,(_y)
+	ld		b,h
+	ld		de,(_yforce)
+	add		hl,de
+	ld		c,h
+	pop		hl
+	ld		de,_elevator1Y+1
+	ld		a,(de)
+	call	_isABetweenBAndC
+	jr		z,_willLand
+
+	ld		de,_elevator2Y+1
+	ld		a,(de)
+	call	_isABetweenBAndC
+	ret		nz
+
+_willLand:
+	ld		(_attachedElevator),de
+	ld		(hl),NONELEVATOR
+	ld		bc,0
+	ld		(_xforce),bc
+	ld		(_yforce),bc
+	ret
+
+
+; returns z=set if true
+;
+
+_isABetweenBAndC:
+	cp		b
+	ret		z			; a == b
+	jr		c,{+}		; a < b
+
+	cp		c
+	ret		z
+	jr		nc,{+}		; a > c
+
+	; is between b & c
+	xor		a
+	ret
+
++:	or		$ff
+	ret
+
 
 
 _startFall:
@@ -538,6 +644,16 @@ _dismountLadder:
 	ret
 
 
+_onElevatorUpdate:
+	ld		bc,0
+	ld		(_yforce),bc
+	ld		(_xforce),bc
+	ld		de,(_attachedElevator)
+	ld		a,(de)
+	ld		(_y+1),a
+	ret
+
+
 _updatePosition:
 	ld		iy,(_mapAddrAtFootAfterMove)
 	ld		(_mapAddrAtFootBeforeMove),iy
@@ -627,6 +743,22 @@ _levelNum:
 _eggs:
 	.byte	0
 
+_elevatorX:
+	.byte	0
+
+_elevator1Y:
+	.word	$0000
+
+_elevator2Y:
+	.word	$4000
+
+_attachedElevator:
+	.word	0
+
+_isWithinX:
+	.byte	0
+
+
 _mapAddrAtFootBeforeMove:
 	.word	 0
 _mapAddrAtTummyBeforeMove:
@@ -646,6 +778,9 @@ NONLADDER=1<<BONLADDER
 
 BLADDEREX=5
 NLADDEREX=1<<BLADDEREX
+
+BONELEVATOR=4
+NONELEVATOR=1<<BONELEVATOR
 
 _state:
 	.byte	0

@@ -10,8 +10,11 @@ _levelT:
 	.incbin	"data\chegt.lz"
 
 _levels:
-;	.word	_levelT
 	.word	_level1,_level2,_level3
+
+; x offset of elevator. 0 = no elevators.
+_elevators:
+	.byte	0,0,8*8,0
 
 _title:
 	.incbin "data\title.binlz"

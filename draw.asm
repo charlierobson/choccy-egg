@@ -331,6 +331,85 @@ _HEN:
 	ret
 
 
+; BC = YX (pixels)
+_ELEVATOR:
+	; dr bee .. oph ffs you know
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	ld		hl,DISPLAY._dfilehr
+	add		hl,bc						; hl -> byte address containing topleft pixel
+
+	ld		de,31
+
+	ld		(hl),$ff
+	inc		hl
+	ld		(hl),$ff
+	add		hl,de
+
+	ld		(hl),$ff
+	inc		hl
+	ld		(hl),$ff
+	add		hl,de
+
+	ld		(hl),$ff
+	inc		hl
+	ld		(hl),$ff
+	add		hl,de
+
+	ld		(hl),$ff
+	inc		hl
+	ld		(hl),$ff
+	add		hl,de
+
+	ld		(hl),0
+	inc		hl
+	ld		(hl),0
+	add		hl,de
+
+	ld		(hl),0
+	inc		hl
+	ld		(hl),0
+	ret
+
+; BC = YX (pixels)
+_NOELEVATOR:
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	srl		b
+	rr		c
+	ld		hl,DISPLAY._dfilehr
+	add		hl,bc						; hl -> byte address containing topleft pixel
+
+	ld		de,31
+
+	ld		(hl),0
+	inc		hl
+	ld		(hl),0
+	add		hl,de
+
+	ld		(hl),0
+	inc		hl
+	ld		(hl),0
+	add		hl,de
+
+	ld		(hl),0
+	inc		hl
+	ld		(hl),0
+	add		hl,de
+
+	ld		(hl),0
+	inc		hl
+	ld		(hl),0
+	ret
+
+
+
 _HEX:
 	push	af
 	srl		a

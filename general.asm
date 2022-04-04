@@ -31,6 +31,14 @@ tableget:
 
 
 
+; Gets a byte from a table at offset in a, table base in hl
+;
+tablegetb:
+	call	adda2hl
+	ld		a,(hl)
+	ret
+
+
 
 invertscreen:
 	ld		hl,DISPLAY._dfile+1
