@@ -234,6 +234,17 @@ _onGroundUpdate:
 
 	call	_checkLeftRight
 
+	ld		a,(_xforce+1)				; check if moving
+	and		a
+	jr		z,_checkDown
+
+	ld		a,(frames)
+	and		7
+	cp		3
+	call	z,AYFXPLAYER._walkHi
+	cp		7
+	call	z,AYFXPLAYER._walkLo
+
 _checkDown:
 	ld		a,(INPUT._down)				; only mount ladder when down is just pressed
 	and		1
@@ -338,6 +349,8 @@ _checkLeftRight:
 
 
 _jump:
+	ld		a,(_y+1)
+	ld		(_baseJump),a
 	set		BINAIR,(hl)
 	ld		bc,$fe80
 	ld		(_yforce),bc
@@ -351,6 +364,12 @@ _inAirUpdate:
 	add		hl,bc
 	ld		(_yforce),hl
 	pop		hl
+
+	ld		a,(frames)
+	and		3
+	jr		nz,{+}
+	call	AYFXPLAYER._jumping
++:
 
 	call	_updatePosition
 
@@ -423,6 +442,8 @@ _tryLandOnElevator:
 	ld		a,(_x+1)					; x is within elevator x->x+16?
 	ld		b,a
 	ld		a,(_elevatorX)
+	and		a
+	ret		z
 	cp		b
 	ret		nc
 	add		a,16
@@ -484,6 +505,8 @@ _startFall:
 	ld		b,$01
 	ld		(_yforce),bc
 	ld		(hl),NINAIR
+	ld		a,(_y+1)
+	ld		(_baseJump),a
 	ret
 
 
@@ -771,6 +794,8 @@ _attachedElevator:
 _isWithinX:
 	.byte	0
 
+_baseJump:
+	.byte	0
 
 _mapAddrAtFootBeforeMove:
 	.word	 0

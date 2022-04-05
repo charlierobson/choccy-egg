@@ -75,6 +75,11 @@ _INIT:
 	jr		nz,{-}
 
 	ld		(afxNseMix),de		; reset the player variables
+
+	ld		a,3
+	call	_findFx
+	inc		hl
+	ld		(_walkFx),hl
 	ret
 
 
@@ -260,6 +265,73 @@ afxNseMix=$+1
 	ret
 
 
+_findFx:
+	dec		a
+	ld		h,0
+	ld		l,a
+	add		hl,hl
+	ld		bc,_soundbank+1
+	add		hl,bc
+	ld		c,(hl)
+	inc		hl
+	ld		b,(hl)
+	add		hl,bc
+	ret
+
+
+
+_walkInSilence:
+	.byte	1
+
+_play3:
+	push	af
+	ld		a,(_walkInSilence)
+	and		a
+	ld		a,3
+	call	z,_PLAY
+	pop		af
+	ret
+
+
+_jumping:
+	push	hl
+	ld		hl,(_walkFx)
+	ld		a,(GAME._baseJump)
+	ld		b,a
+	ld		a,(GAME._y+1)
+	sub		b
+	add		a,16
+	ld		(hl),a
+	call	_play3
+	pop		hl
+	ret
+
+
+_walkHi:
+	push	hl
+	ld		hl,(_walkFx)
+	ld		(hl),$07
+	inc		hl
+	ld		(hl),$01
+	call	_play3
+	pop		hl
+	ret
+
+_walkLo:
+	push	hl
+	ld		hl,(_walkFx)
+	ld		(hl),$46
+	inc		hl
+	ld		(hl),$01
+	call	_play3
+	pop		hl
+	ret
+
+
+
+
+_walkFx:
+	.word	0
 
 
 _soundbank:
